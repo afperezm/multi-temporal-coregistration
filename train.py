@@ -1,14 +1,13 @@
 import argparse
 import os
+from time import time
 import torch
-import torch.utils.data as data
-from torch.utils.data import DataLoader
 
 from data import ImageFolder
 from framework import MyFrame
 from loss import DiceBCELoss
 from networks.dinknet import DinkNet34
-from time import time
+from torch.utils.data import DataLoader
 
 SHAPE = (1024, 1024)
 
