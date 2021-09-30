@@ -5,12 +5,12 @@ import torch.nn.functional as F
 from functools import partial
 from torchvision import models
 
-nonlinearity = partial(F.relu, inplace=True)
+non_linearity = partial(F.relu, inplace=True)
 
 
-class Dblock(nn.Module):
+class DBlock(nn.Module):
     def __init__(self, channel):
-        super(Dblock, self).__init__()
+        super(DBlock, self).__init__()
         self.dilate1 = nn.Conv2d(channel / 2, channel, kernel_size=3, dilation=1, padding=1)
         self.dilate2 = nn.Conv2d(channel, channel, kernel_size=3, dilation=2, padding=2)
         self.dilate3 = nn.Conv2d(channel, channel, kernel_size=3, dilation=4, padding=4)
@@ -23,19 +23,19 @@ class Dblock(nn.Module):
                     m.bias.data.zero_()
 
     def forward(self, x):
-        dilate1_out = nonlinearity(self.dilate1(x))
-        dilate2_out = nonlinearity(self.dilate2(dilate1_out))
-        dilate3_out = nonlinearity(self.dilate3(dilate2_out))
-        dilate4_out = nonlinearity(self.dilate4(dilate3_out))
-        dilate5_out = nonlinearity(self.dilate5(dilate4_out))
-        dilate6_out = nonlinearity(self.dilate6(dilate5_out))
+        dilate1_out = non_linearity(self.dilate1(x))
+        dilate2_out = non_linearity(self.dilate2(dilate1_out))
+        dilate3_out = non_linearity(self.dilate3(dilate2_out))
+        dilate4_out = non_linearity(self.dilate4(dilate3_out))
+        dilate5_out = non_linearity(self.dilate5(dilate4_out))
+        dilate6_out = non_linearity(self.dilate6(dilate5_out))
         out = dilate1_out + dilate2_out + dilate3_out + dilate4_out + dilate5_out + dilate6_out
         return out
 
 
-class Dunet(nn.Module):
+class DUnet(nn.Module):
     def __init__(self):
-        super(Dunet, self).__init__()
+        super(DUnet, self).__init__()
 
         vgg13 = models.vgg13(pretrained=True)
 
@@ -46,15 +46,15 @@ class Dunet(nn.Module):
         self.conv5 = vgg13.features[10]
         self.conv6 = vgg13.features[12]
 
-        self.dilate_center = Dblock(512)
+        self.dilate_center = DBlock(512)
 
         self.up3 = self.conv_stage(512, 256)
         self.up2 = self.conv_stage(256, 128)
         self.up1 = self.conv_stage(128, 64)
 
-        self.trans3 = self.upsample(512, 256)
-        self.trans2 = self.upsample(256, 128)
-        self.trans1 = self.upsample(128, 64)
+        self.trans3 = self.up_sample(512, 256)
+        self.trans2 = self.up_sample(256, 128)
+        self.trans1 = self.up_sample(128, 64)
 
         self.conv_last = nn.Sequential(
             nn.Conv2d(64, 1, 3, 1, 1),
@@ -76,16 +76,16 @@ class Dunet(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-    def upsample(self, ch_coarse, ch_fine):
+    def up_sample(self, ch_coarse, ch_fine):
         return nn.Sequential(
             nn.ConvTranspose2d(ch_coarse, ch_fine, 4, 2, 1, bias=False),
             nn.ReLU(inplace=True)
         )
 
     def forward(self, x):
-        stage1 = nonlinearity(self.conv2(nonlinearity(self.conv1(x))))
-        stage2 = nonlinearity(self.conv4(nonlinearity(self.conv3(self.max_pool(stage1)))))
-        stage3 = nonlinearity(self.conv6(nonlinearity(self.conv5(self.max_pool(stage2)))))
+        stage1 = non_linearity(self.conv2(non_linearity(self.conv1(x))))
+        stage2 = non_linearity(self.conv4(non_linearity(self.conv3(self.max_pool(stage1)))))
+        stage3 = non_linearity(self.conv6(non_linearity(self.conv5(self.max_pool(stage2)))))
 
         out = self.dilate_center(self.max_pool(stage3))
 

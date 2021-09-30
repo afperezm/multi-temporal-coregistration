@@ -4,7 +4,7 @@ import torch.utils.data as data
 
 from data import ImageFolder
 from framework import MyFrame
-from loss import dice_bce_loss
+from loss import DiceBCELoss
 from networks.dinknet import DinkNet34
 from time import time
 
@@ -15,7 +15,7 @@ train_list = list(map(lambda x: x[:-8], image_list))
 NAME = 'log01_dink34'
 BATCH_SIZE_PER_CARD = 4
 
-solver = MyFrame(DinkNet34, dice_bce_loss, 2e-4)
+solver = MyFrame(DinkNet34, DiceBCELoss, 2e-4)
 batch_size = torch.cuda.device_count() * BATCH_SIZE_PER_CARD
 
 dataset = ImageFolder(train_list, ROOT)
@@ -61,7 +61,7 @@ for epoch in range(1, total_epoch + 1):
         if solver.old_lr < 5e-7:
             break
         solver.load('weights/' + NAME + '.th')
-        solver.update_lr(5.0, factor=True, mylog=my_log)
+        solver.update_lr(5.0, factor=True, my_log=my_log)
     my_log.flush()
 
 print('Finish!', file=my_log)

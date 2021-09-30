@@ -72,11 +72,11 @@ class MyFrame:
     def load(self, path):
         self.net.load_state_dict(torch.load(path))
 
-    def update_lr(self, new_lr, mylog, factor=False):
+    def update_lr(self, new_lr, my_log, factor=False):
         if factor:
             new_lr = self.old_lr / new_lr
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = new_lr
 
-        print('update learning rate: %f -> %f' % (self.old_lr, new_lr), file=mylog)
+        print('update learning rate: %f -> %f' % (self.old_lr, new_lr), file=my_log)
         print('update learning rate: %f -> %f' % (self.old_lr, new_lr))

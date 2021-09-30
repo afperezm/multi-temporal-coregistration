@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 
 
-class dice_bce_loss(nn.Module):
+class DiceBCELoss(nn.Module):
     def __init__(self, batch=True):
-        super(dice_bce_loss, self).__init__()
+        super(DiceBCELoss, self).__init__()
         self.batch = batch
         self.bce_loss = nn.BCELoss()
 
-    def soft_dice_coeff(self, y_true, y_pred):
+    def soft_dice_coefficient(self, y_true, y_pred):
         smooth = 0.0  # may change
         if self.batch:
             i = torch.sum(y_true)
@@ -23,7 +23,7 @@ class dice_bce_loss(nn.Module):
         return score.mean()
 
     def soft_dice_loss(self, y_true, y_pred):
-        loss = 1 - self.soft_dice_coeff(y_true, y_pred)
+        loss = 1 - self.soft_dice_coefficient(y_true, y_pred)
         return loss
 
     def __call__(self, y_true, y_pred):

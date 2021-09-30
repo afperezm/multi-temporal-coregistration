@@ -15,7 +15,7 @@ class Unet(nn.Module):
         self.down7 = self.conv_stage(256, 512)
 
         self.center = self.conv_stage(512, 1024)
-        # self.center_res = self.resblock(1024)
+        # self.center_res = self.res_block(1024)
 
         self.up7 = self.conv_stage(1024, 512)
         self.up6 = self.conv_stage(512, 256)
@@ -25,13 +25,13 @@ class Unet(nn.Module):
         self.up2 = self.conv_stage(32, 16)
         self.up1 = self.conv_stage(16, 8)
 
-        self.trans7 = self.upsample(1024, 512)
-        self.trans6 = self.upsample(512, 256)
-        self.trans5 = self.upsample(256, 128)
-        self.trans4 = self.upsample(128, 64)
-        self.trans3 = self.upsample(64, 32)
-        self.trans2 = self.upsample(32, 16)
-        self.trans1 = self.upsample(16, 8)
+        self.trans7 = self.up_sample(1024, 512)
+        self.trans6 = self.up_sample(512, 256)
+        self.trans5 = self.up_sample(256, 128)
+        self.trans4 = self.up_sample(128, 64)
+        self.trans3 = self.up_sample(64, 32)
+        self.trans2 = self.up_sample(32, 16)
+        self.trans1 = self.up_sample(16, 8)
 
         self.conv_last = nn.Sequential(
             nn.Conv2d(8, 1, 3, 1, 1),
@@ -65,7 +65,7 @@ class Unet(nn.Module):
                 nn.ReLU()
             )
 
-    def upsample(self, ch_coarse, ch_fine):
+    def up_sample(self, ch_coarse, ch_fine):
         return nn.Sequential(
             nn.ConvTranspose2d(ch_coarse, ch_fine, 4, 2, 1, bias=False),
             nn.ReLU()

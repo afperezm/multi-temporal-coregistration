@@ -7,12 +7,12 @@ import torch.nn.functional as F
 from functools import partial
 from torchvision import models
 
-nonlinearity = partial(F.relu, inplace=True)
+non_linearity = partial(F.relu, inplace=True)
 
 
-class Dblock_more_dilate(nn.Module):
+class DBlockMoreDilate(nn.Module):
     def __init__(self, channel):
-        super(Dblock_more_dilate, self).__init__()
+        super(DBlockMoreDilate, self).__init__()
         self.dilate1 = nn.Conv2d(channel, channel, kernel_size=3, dilation=1, padding=1)
         self.dilate2 = nn.Conv2d(channel, channel, kernel_size=3, dilation=2, padding=2)
         self.dilate3 = nn.Conv2d(channel, channel, kernel_size=3, dilation=4, padding=4)
@@ -24,18 +24,18 @@ class Dblock_more_dilate(nn.Module):
                     m.bias.data.zero_()
 
     def forward(self, x):
-        dilate1_out = nonlinearity(self.dilate1(x))
-        dilate2_out = nonlinearity(self.dilate2(dilate1_out))
-        dilate3_out = nonlinearity(self.dilate3(dilate2_out))
-        dilate4_out = nonlinearity(self.dilate4(dilate3_out))
-        dilate5_out = nonlinearity(self.dilate5(dilate4_out))
+        dilate1_out = non_linearity(self.dilate1(x))
+        dilate2_out = non_linearity(self.dilate2(dilate1_out))
+        dilate3_out = non_linearity(self.dilate3(dilate2_out))
+        dilate4_out = non_linearity(self.dilate4(dilate3_out))
+        dilate5_out = non_linearity(self.dilate5(dilate4_out))
         out = x + dilate1_out + dilate2_out + dilate3_out + dilate4_out + dilate5_out
         return out
 
 
-class Dblock(nn.Module):
+class DBlock(nn.Module):
     def __init__(self, channel):
-        super(Dblock, self).__init__()
+        super(DBlock, self).__init__()
         self.dilate1 = nn.Conv2d(channel, channel, kernel_size=3, dilation=1, padding=1)
         self.dilate2 = nn.Conv2d(channel, channel, kernel_size=3, dilation=2, padding=2)
         self.dilate3 = nn.Conv2d(channel, channel, kernel_size=3, dilation=4, padding=4)
@@ -47,11 +47,11 @@ class Dblock(nn.Module):
                     m.bias.data.zero_()
 
     def forward(self, x):
-        dilate1_out = nonlinearity(self.dilate1(x))
-        dilate2_out = nonlinearity(self.dilate2(dilate1_out))
-        dilate3_out = nonlinearity(self.dilate3(dilate2_out))
-        dilate4_out = nonlinearity(self.dilate4(dilate3_out))
-        # dilate5_out = nonlinearity(self.dilate5(dilate4_out))
+        dilate1_out = non_linearity(self.dilate1(x))
+        dilate2_out = non_linearity(self.dilate2(dilate1_out))
+        dilate3_out = non_linearity(self.dilate3(dilate2_out))
+        dilate4_out = non_linearity(self.dilate4(dilate3_out))
+        # dilate5_out = non_linearity(self.dilate5(dilate4_out))
         out = x + dilate1_out + dilate2_out + dilate3_out + dilate4_out  # + dilate5_out
         return out
 
@@ -62,15 +62,15 @@ class DecoderBlock(nn.Module):
 
         self.conv1 = nn.Conv2d(in_channels, in_channels // 4, 1)
         self.norm1 = nn.BatchNorm2d(in_channels // 4)
-        self.relu1 = nonlinearity
+        self.relu1 = non_linearity
 
         self.deconv2 = nn.ConvTranspose2d(in_channels // 4, in_channels // 4, 3, stride=2, padding=1, output_padding=1)
         self.norm2 = nn.BatchNorm2d(in_channels // 4)
-        self.relu2 = nonlinearity
+        self.relu2 = non_linearity
 
         self.conv3 = nn.Conv2d(in_channels // 4, n_filters, 1)
         self.norm3 = nn.BatchNorm2d(n_filters)
-        self.relu3 = nonlinearity
+        self.relu3 = non_linearity
 
     def forward(self, x):
         x = self.conv1(x)
@@ -85,45 +85,45 @@ class DecoderBlock(nn.Module):
         return x
 
 
-class DinkNet34_less_pool(nn.Module):
+class DinkNet34LessPool(nn.Module):
     def __init__(self, num_classes=1):
-        super(DinkNet34_less_pool, self).__init__()
+        super(DinkNet34LessPool, self).__init__()
 
         filters = [64, 128, 256, 512]
         resnet = models.resnet34(pretrained=True)
 
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
+        self.first_conv = resnet.conv1
+        self.first_bn = resnet.bn1
+        self.first_relu = resnet.relu
+        self.first_max_pool = resnet.maxpool
         self.encoder1 = resnet.layer1
         self.encoder2 = resnet.layer2
         self.encoder3 = resnet.layer3
 
-        self.dblock = Dblock_more_dilate(256)
+        self.d_block = DBlockMoreDilate(256)
 
         self.decoder3 = DecoderBlock(filters[2], filters[1])
         self.decoder2 = DecoderBlock(filters[1], filters[0])
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
-        self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
+        self.final_deconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
+        self.final_relu1 = non_linearity
+        self.final_conv2 = nn.Conv2d(32, 32, 3, padding=1)
+        self.final_relu2 = non_linearity
+        self.final_conv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
     def forward(self, x):
         # Encoder
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
+        x = self.first_conv(x)
+        x = self.first_bn(x)
+        x = self.first_relu(x)
+        x = self.first_max_pool(x)
         e1 = self.encoder1(x)
         e2 = self.encoder2(e1)
         e3 = self.encoder3(e2)
 
         # Center
-        e3 = self.dblock(e3)
+        e3 = self.d_block(e3)
 
         # Decoder
         d3 = self.decoder3(e3) + e2
@@ -131,11 +131,11 @@ class DinkNet34_less_pool(nn.Module):
         d1 = self.decoder1(d2)
 
         # Final Classification
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
+        out = self.final_deconv1(d1)
+        out = self.final_relu1(out)
+        out = self.final_conv2(out)
+        out = self.final_relu2(out)
+        out = self.final_conv3(out)
 
         return F.sigmoid(out)
 
@@ -146,41 +146,41 @@ class DinkNet34(nn.Module):
 
         filters = [64, 128, 256, 512]
         resnet = models.resnet34(pretrained=True)
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
+        self.first_conv = resnet.conv1
+        self.first_bn = resnet.bn1
+        self.first_relu = resnet.relu
+        self.first_max_pool = resnet.maxpool
         self.encoder1 = resnet.layer1
         self.encoder2 = resnet.layer2
         self.encoder3 = resnet.layer3
         self.encoder4 = resnet.layer4
 
-        self.dblock = Dblock(512)
+        self.d_block = DBlock(512)
 
         self.decoder4 = DecoderBlock(filters[3], filters[2])
         self.decoder3 = DecoderBlock(filters[2], filters[1])
         self.decoder2 = DecoderBlock(filters[1], filters[0])
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
-        self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
+        self.final_deconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
+        self.final_relu1 = non_linearity
+        self.final_conv2 = nn.Conv2d(32, 32, 3, padding=1)
+        self.final_relu2 = non_linearity
+        self.final_conv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
     def forward(self, x):
         # Encoder
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
+        x = self.first_conv(x)
+        x = self.first_bn(x)
+        x = self.first_relu(x)
+        x = self.first_max_pool(x)
         e1 = self.encoder1(x)
         e2 = self.encoder2(e1)
         e3 = self.encoder3(e2)
         e4 = self.encoder4(e3)
 
         # Center
-        e4 = self.dblock(e4)
+        e4 = self.d_block(e4)
 
         # Decoder
         d4 = self.decoder4(e4) + e3
@@ -188,11 +188,11 @@ class DinkNet34(nn.Module):
         d2 = self.decoder2(d3) + e1
         d1 = self.decoder1(d2)
 
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
+        out = self.final_deconv1(d1)
+        out = self.final_relu1(out)
+        out = self.final_conv2(out)
+        out = self.final_relu2(out)
+        out = self.final_conv3(out)
 
         return F.sigmoid(out)
 
@@ -203,52 +203,52 @@ class DinkNet50(nn.Module):
 
         filters = [256, 512, 1024, 2048]
         resnet = models.resnet50(pretrained=True)
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
+        self.first_conv = resnet.conv1
+        self.first_bn = resnet.bn1
+        self.first_relu = resnet.relu
+        self.first_max_pool = resnet.maxpool
         self.encoder1 = resnet.layer1
         self.encoder2 = resnet.layer2
         self.encoder3 = resnet.layer3
         self.encoder4 = resnet.layer4
 
-        self.dblock = Dblock_more_dilate(2048)
+        self.d_block = DBlockMoreDilate(2048)
 
         self.decoder4 = DecoderBlock(filters[3], filters[2])
         self.decoder3 = DecoderBlock(filters[2], filters[1])
         self.decoder2 = DecoderBlock(filters[1], filters[0])
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
-        self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
+        self.final_deconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
+        self.final_relu1 = non_linearity
+        self.final_conv2 = nn.Conv2d(32, 32, 3, padding=1)
+        self.final_relu2 = non_linearity
+        self.final_conv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
     def forward(self, x):
         # Encoder
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
+        x = self.first_conv(x)
+        x = self.first_bn(x)
+        x = self.first_relu(x)
+        x = self.first_max_pool(x)
         e1 = self.encoder1(x)
         e2 = self.encoder2(e1)
         e3 = self.encoder3(e2)
         e4 = self.encoder4(e3)
 
         # Center
-        e4 = self.dblock(e4)
+        e4 = self.d_block(e4)
 
         # Decoder
         d4 = self.decoder4(e4) + e3
         d3 = self.decoder3(d4) + e2
         d2 = self.decoder2(d3) + e1
         d1 = self.decoder1(d2)
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
+        out = self.final_deconv1(d1)
+        out = self.final_relu1(out)
+        out = self.final_conv2(out)
+        out = self.final_relu2(out)
+        out = self.final_conv3(out)
 
         return F.sigmoid(out)
 
@@ -259,52 +259,52 @@ class DinkNet101(nn.Module):
 
         filters = [256, 512, 1024, 2048]
         resnet = models.resnet101(pretrained=True)
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
+        self.first_conv = resnet.conv1
+        self.first_bn = resnet.bn1
+        self.first_relu = resnet.relu
+        self.first_max_pool = resnet.maxpool
         self.encoder1 = resnet.layer1
         self.encoder2 = resnet.layer2
         self.encoder3 = resnet.layer3
         self.encoder4 = resnet.layer4
 
-        self.dblock = Dblock_more_dilate(2048)
+        self.d_block = DBlockMoreDilate(2048)
 
         self.decoder4 = DecoderBlock(filters[3], filters[2])
         self.decoder3 = DecoderBlock(filters[2], filters[1])
         self.decoder2 = DecoderBlock(filters[1], filters[0])
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3, padding=1)
-        self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 3, padding=1)
+        self.final_deconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
+        self.final_relu1 = non_linearity
+        self.final_conv2 = nn.Conv2d(32, 32, 3, padding=1)
+        self.final_relu2 = non_linearity
+        self.final_conv3 = nn.Conv2d(32, num_classes, 3, padding=1)
 
     def forward(self, x):
         # Encoder
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
+        x = self.first_conv(x)
+        x = self.first_bn(x)
+        x = self.first_relu(x)
+        x = self.first_max_pool(x)
         e1 = self.encoder1(x)
         e2 = self.encoder2(e1)
         e3 = self.encoder3(e2)
         e4 = self.encoder4(e3)
 
         # Center
-        e4 = self.dblock(e4)
+        e4 = self.d_block(e4)
 
         # Decoder
         d4 = self.decoder4(e4) + e3
         d3 = self.decoder3(d4) + e2
         d2 = self.decoder2(d3) + e1
         d1 = self.decoder1(d2)
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
+        out = self.final_deconv1(d1)
+        out = self.final_relu1(out)
+        out = self.final_conv2(out)
+        out = self.final_relu2(out)
+        out = self.final_conv3(out)
 
         return F.sigmoid(out)
 
@@ -315,10 +315,10 @@ class LinkNet34(nn.Module):
 
         filters = [64, 128, 256, 512]
         resnet = models.resnet34(pretrained=True)
-        self.firstconv = resnet.conv1
-        self.firstbn = resnet.bn1
-        self.firstrelu = resnet.relu
-        self.firstmaxpool = resnet.maxpool
+        self.first_conv = resnet.conv1
+        self.first_bn = resnet.bn1
+        self.first_relu = resnet.relu
+        self.first_max_pool = resnet.maxpool
         self.encoder1 = resnet.layer1
         self.encoder2 = resnet.layer2
         self.encoder3 = resnet.layer3
@@ -329,18 +329,18 @@ class LinkNet34(nn.Module):
         self.decoder2 = DecoderBlock(filters[1], filters[0])
         self.decoder1 = DecoderBlock(filters[0], filters[0])
 
-        self.finaldeconv1 = nn.ConvTranspose2d(filters[0], 32, 3, stride=2)
-        self.finalrelu1 = nonlinearity
-        self.finalconv2 = nn.Conv2d(32, 32, 3)
-        self.finalrelu2 = nonlinearity
-        self.finalconv3 = nn.Conv2d(32, num_classes, 2, padding=1)
+        self.final_deconv1 = nn.ConvTranspose2d(filters[0], 32, 3, stride=2)
+        self.final_relu1 = non_linearity
+        self.final_conv2 = nn.Conv2d(32, 32, 3)
+        self.final_relu2 = non_linearity
+        self.final_conv3 = nn.Conv2d(32, num_classes, 2, padding=1)
 
     def forward(self, x):
         # Encoder
-        x = self.firstconv(x)
-        x = self.firstbn(x)
-        x = self.firstrelu(x)
-        x = self.firstmaxpool(x)
+        x = self.first_conv(x)
+        x = self.first_bn(x)
+        x = self.first_relu(x)
+        x = self.first_max_pool(x)
         e1 = self.encoder1(x)
         e2 = self.encoder2(e1)
         e3 = self.encoder3(e2)
@@ -351,10 +351,10 @@ class LinkNet34(nn.Module):
         d3 = self.decoder3(d4) + e2
         d2 = self.decoder2(d3) + e1
         d1 = self.decoder1(d2)
-        out = self.finaldeconv1(d1)
-        out = self.finalrelu1(out)
-        out = self.finalconv2(out)
-        out = self.finalrelu2(out)
-        out = self.finalconv3(out)
+        out = self.final_deconv1(d1)
+        out = self.final_relu1(out)
+        out = self.final_conv2(out)
+        out = self.final_relu2(out)
+        out = self.final_conv3(out)
 
         return F.sigmoid(out)
