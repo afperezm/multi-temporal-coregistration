@@ -1,9 +1,5 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable as V
-
-import cv2
-import numpy as np
 
 
 class dice_bce_loss(nn.Module):

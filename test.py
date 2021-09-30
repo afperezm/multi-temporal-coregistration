@@ -1,19 +1,11 @@
-import torch
-import torch.nn as nn
-import torch.utils.data as data
-from torch.autograd import Variable as V
-
 import cv2
-import os
 import numpy as np
-import matplotlib.pyplot as plt
-import pickle
+import os
+import torch
 
+from networks.dinknet import DinkNet34
 from time import time
-
-from networks.unet import Unet
-from networks.dunet import Dunet
-from networks.dinknet import LinkNet34, DinkNet34, DinkNet50, DinkNet101, DinkNet34_less_pool
+from torch.autograd import Variable as V
 
 BATCHSIZE_PER_CARD = 4
 

@@ -1,13 +1,11 @@
 """
 Based on https://github.com/asanakoy/kaggle_carvana_segmentation
 """
-import torch
-import torch.utils.data as data
-from torch.autograd import Variable as V
-
 import cv2
 import numpy as np
 import os
+import torch
+import torch.utils.data as data
 
 
 def randomHueSaturationValue(image, hue_shift_limit=(-180, 180),
