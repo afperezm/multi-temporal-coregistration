@@ -6,15 +6,15 @@ import cv2
 import numpy as np
 
 
-class MyFrame():
-    def __init__(self, net, loss, lr=2e-4, evalmode=False):
+class MyFrame:
+    def __init__(self, net, loss, lr=2e-4, eval_mode=False):
         self.net = net().cuda()
         self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
         self.optimizer = torch.optim.Adam(params=self.net.parameters(), lr=lr)
         # self.optimizer = torch.optim.RMSprop(params=self.net.parameters(), lr=lr)
         self.loss = loss()
         self.old_lr = lr
-        if evalmode:
+        if eval_mode:
             for i in self.net.modules():
                 if isinstance(i, nn.BatchNorm2d):
                     i.eval()

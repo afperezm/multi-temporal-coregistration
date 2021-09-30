@@ -123,8 +123,8 @@ def default_loader(id, root):
 
 class ImageFolder(data.Dataset):
 
-    def __init__(self, trainlist, root):
-        self.ids = trainlist
+    def __init__(self, train_list, root):
+        self.ids = train_list
         self.loader = default_loader
         self.root = root
 
