@@ -7,9 +7,12 @@ import numpy as np
 
 
 class MyFrame:
-    def __init__(self, net, loss, lr=2e-4, eval_mode=False):
-        self.net = net().cuda()
-        self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
+    def __init__(self, net, loss, device, lr=2e-4, eval_mode=False):
+        self.device = device
+        self.net = net()
+        if torch.cuda.device_count() > 0:
+            self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
+        self.net = self.net.to(self.device)
         self.optimizer = torch.optim.Adam(params=self.net.parameters(), lr=lr)
         # self.optimizer = torch.optim.RMSprop(params=self.net.parameters(), lr=lr)
         self.loss = loss()
@@ -44,7 +47,7 @@ class MyFrame:
     def test_one_img_from_path(self, path):
         img = cv2.imread(path)
         img = np.array(img, np.float32) / 255.0 * 3.2 - 1.6
-        img = V(torch.Tensor(img).cuda())
+        img = V(torch.Tensor(img).to(self.device))
 
         mask = self.net.forward(img).squeeze().cpu().data.numpy()  # .squeeze(1)
         mask[mask > 0.5] = 1
@@ -53,9 +56,9 @@ class MyFrame:
         return mask
 
     def forward(self, volatile=False):
-        self.img = V(self.img.cuda(), volatile=volatile)
+        self.img = V(self.img.to(self.device), volatile=volatile)
         if self.mask is not None:
-            self.mask = V(self.mask.cuda(), volatile=volatile)
+            self.mask = V(self.mask.to(self.device), volatile=volatile)
 
     def optimize(self):
         self.forward()

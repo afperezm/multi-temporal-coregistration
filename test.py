@@ -10,15 +10,21 @@ from torch.autograd import Variable as V
 BATCH_SIZE_PER_CARD = 4
 
 
-class TTAFrame():
-    def __init__(self, net):
-        self.net = net().cuda()
-        self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
+class TTAFrame:
+    def __init__(self, net, device):
+        self.device = device
+        self.net = net()
+        if torch.cuda.device_count() > 0:
+            self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
+        self.net = self.net.to(self.device)
 
     def test_one_img_from_path(self, path, eval_mode=True):
         if eval_mode:
             self.net.eval()
-        batch_size = torch.cuda.device_count() * BATCH_SIZE_PER_CARD
+        if torch.cuda.device_count() > 0:
+            batch_size = torch.cuda.device_count() * BATCH_SIZE_PER_CARD
+        else:
+            batch_size = BATCH_SIZE_PER_CARD
         if batch_size >= 8:
             return self.test_one_img_from_path_1(path)
         elif batch_size >= 4:
@@ -39,10 +45,10 @@ class TTAFrame():
         img3 = img3.transpose(0, 3, 1, 2)
         img4 = img4.transpose(0, 3, 1, 2)
 
-        img1 = V(torch.Tensor(np.array(img1, np.float32) / 255.0 * 3.2 - 1.6).cuda())
-        img2 = V(torch.Tensor(np.array(img2, np.float32) / 255.0 * 3.2 - 1.6).cuda())
-        img3 = V(torch.Tensor(np.array(img3, np.float32) / 255.0 * 3.2 - 1.6).cuda())
-        img4 = V(torch.Tensor(np.array(img4, np.float32) / 255.0 * 3.2 - 1.6).cuda())
+        img1 = V(torch.Tensor(np.array(img1, np.float32) / 255.0 * 3.2 - 1.6).to(device))
+        img2 = V(torch.Tensor(np.array(img2, np.float32) / 255.0 * 3.2 - 1.6).to(device))
+        img3 = V(torch.Tensor(np.array(img3, np.float32) / 255.0 * 3.2 - 1.6).to(device))
+        img4 = V(torch.Tensor(np.array(img4, np.float32) / 255.0 * 3.2 - 1.6).to(device))
 
         mask_a = self.net.forward(img1).squeeze().cpu().data.numpy()
         mask_b = self.net.forward(img2).squeeze().cpu().data.numpy()
@@ -67,10 +73,10 @@ class TTAFrame():
         img3 = img3.transpose(0, 3, 1, 2)
         img4 = img4.transpose(0, 3, 1, 2)
 
-        img1 = V(torch.Tensor(np.array(img1, np.float32) / 255.0 * 3.2 - 1.6).cuda())
-        img2 = V(torch.Tensor(np.array(img2, np.float32) / 255.0 * 3.2 - 1.6).cuda())
-        img3 = V(torch.Tensor(np.array(img3, np.float32) / 255.0 * 3.2 - 1.6).cuda())
-        img4 = V(torch.Tensor(np.array(img4, np.float32) / 255.0 * 3.2 - 1.6).cuda())
+        img1 = V(torch.Tensor(np.array(img1, np.float32) / 255.0 * 3.2 - 1.6).to(device))
+        img2 = V(torch.Tensor(np.array(img2, np.float32) / 255.0 * 3.2 - 1.6).to(device))
+        img3 = V(torch.Tensor(np.array(img3, np.float32) / 255.0 * 3.2 - 1.6).to(device))
+        img4 = V(torch.Tensor(np.array(img4, np.float32) / 255.0 * 3.2 - 1.6).to(device))
 
         mask_a = self.net.forward(img1).squeeze().cpu().data.numpy()
         mask_b = self.net.forward(img2).squeeze().cpu().data.numpy()
@@ -91,10 +97,10 @@ class TTAFrame():
         img4 = np.array(img3)[:, :, ::-1]
         img5 = img3.transpose(0, 3, 1, 2)
         img5 = np.array(img5, np.float32) / 255.0 * 3.2 - 1.6
-        img5 = V(torch.Tensor(img5).cuda())
+        img5 = V(torch.Tensor(img5).to(device))
         img6 = img4.transpose(0, 3, 1, 2)
         img6 = np.array(img6, np.float32) / 255.0 * 3.2 - 1.6
-        img6 = V(torch.Tensor(img6).cuda())
+        img6 = V(torch.Tensor(img6).to(device))
 
         mask_a = self.net.forward(img5).squeeze().cpu().data.numpy()  # .squeeze(1)
         mask_b = self.net.forward(img6).squeeze().cpu().data.numpy()
@@ -115,7 +121,7 @@ class TTAFrame():
         img4 = np.array(img3)[:, :, ::-1]
         img5 = np.concatenate([img3, img4]).transpose(0, 3, 1, 2)
         img5 = np.array(img5, np.float32) / 255.0 * 3.2 - 1.6
-        img5 = V(torch.Tensor(img5).cuda())
+        img5 = V(torch.Tensor(img5).to(device))
 
         mask = self.net.forward(img5).squeeze().cpu().data.numpy()  # .squeeze(1)
         mask1 = mask[:4] + mask[4:, :, ::-1]
@@ -131,7 +137,8 @@ class TTAFrame():
 # source = 'dataset/test/'
 source = 'dataset/valid/'
 val = os.listdir(source)
-solver = TTAFrame(DinkNet34)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+solver = TTAFrame(DinkNet34, device)
 solver.load('weights/log01_dink34.th')
 tic = time()
 target = 'submits/log01_dink34/'

@@ -15,8 +15,13 @@ train_list = list(map(lambda x: x[:-8], image_list))
 NAME = 'log01_dink34'
 BATCH_SIZE_PER_CARD = 4
 
-solver = MyFrame(DinkNet34, DiceBCELoss, 2e-4)
-batch_size = torch.cuda.device_count() * BATCH_SIZE_PER_CARD
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+solver = MyFrame(DinkNet34, DiceBCELoss, device, 2e-4)
+if torch.cuda.device_count() > 0:
+    batch_size = torch.cuda.device_count() * BATCH_SIZE_PER_CARD
+else:
+    batch_size = BATCH_SIZE_PER_CARD
 
 dataset = ImageFolder(train_list, ROOT)
 data_loader = torch.utils.data.DataLoader(
