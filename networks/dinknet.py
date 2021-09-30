@@ -87,7 +87,7 @@ class DecoderBlock(nn.Module):
 
 class DinkNet34_less_pool(nn.Module):
     def __init__(self, num_classes=1):
-        super(DinkNet34_more_dilate, self).__init__()
+        super(DinkNet34_less_pool, self).__init__()
 
         filters = [64, 128, 256, 512]
         resnet = models.resnet34(pretrained=True)
