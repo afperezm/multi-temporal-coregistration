@@ -67,7 +67,7 @@ class MyFrame:
         loss = self.loss(self.mask, pred)
         loss.backward()
         self.optimizer.step()
-        return loss.data[0]
+        return loss.item(0)
 
     def save(self, path):
         torch.save(self.net.state_dict(), path)
