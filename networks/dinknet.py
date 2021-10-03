@@ -1,6 +1,7 @@
 """
 Codes of LinkNet based on https://github.com/snakers4/spacenet-three
 """
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
