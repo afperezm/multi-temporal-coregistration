@@ -147,7 +147,7 @@ def main():
     checkpoints_dir = PARAMS.checkpoints_dir
     model = PARAMS.model
 
-    val = glob.glob(f'{source_dir}/*_sat.jpg')
+    val = [img for img in os.listdir(source_dir) if img.endswith('_sat.jpg')]
 
     dev = "cuda" if torch.cuda.is_available() else "cpu"
 
