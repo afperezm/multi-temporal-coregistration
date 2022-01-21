@@ -1,5 +1,6 @@
 import argparse
 import cv2
+import glob
 import numpy as np
 import os
 import torch
@@ -146,7 +147,7 @@ def main():
     checkpoints_dir = PARAMS.checkpoints_dir
     model = PARAMS.model
 
-    val = os.listdir(source_dir)
+    val = glob.glob(f'{source_dir}/*_sat.jpg')
 
     dev = "cuda" if torch.cuda.is_available() else "cpu"
 
