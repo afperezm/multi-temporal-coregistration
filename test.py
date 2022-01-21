@@ -1,3 +1,4 @@
+import argparse
 import cv2
 import numpy as np
 import os
@@ -8,6 +9,7 @@ from time import time
 from torch.autograd import Variable as V
 
 BATCH_SIZE_PER_CARD = 4
+PARAMS = None
 
 
 class TTAFrame:
@@ -134,21 +136,45 @@ class TTAFrame:
         self.net.load_state_dict(torch.load(path))
 
 
-# source = 'dataset/test/'
-source = 'dataset/valid/'
-val = os.listdir(source)
-device = "cuda" if torch.cuda.is_available() else "cpu"
-solver = TTAFrame(DinkNet34, device)
-solver.load('weights/log01_dink34.th')
-tic = time()
-target = 'submits/log01_dink34/'
-os.mkdir(target)
-for i, name in enumerate(val):
-    if i % 10 == 0:
-        print
-        i / 10, '    ', '%.2f' % (time() - tic)
-    mask = solver.test_one_img_from_path(source + name)
-    mask[mask > 4.0] = 255
-    mask[mask <= 4.0] = 0
-    mask = np.concatenate([mask[:, :, None], mask[:, :, None], mask[:, :, None]], axis=2)
-    cv2.imwrite(target + name[:-7] + 'mask.png', mask.astype(np.uint8))
+def main():
+    # source = 'dataset/test/'
+    # source = 'dataset/valid/'
+    source = PARAMS.source_dir
+    # target = 'submits/log01_din34/'
+    target = PARAMS.target_dir
+    # weights = 'weights/log01_dink34.th'
+    weights = PARAMS.checkpoint
+
+    val = os.listdir(source)
+
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+
+    solver = TTAFrame(DinkNet34, dev)
+    solver.load(weights)
+
+    tic = time()
+
+    if not os.path.exists(target):
+        os.mkdir(target)
+
+    for i, name in enumerate(val):
+        if i % 10 == 0:
+            print(i / 10, '    ', '%.2f' % (time() - tic))
+        mask = solver.test_one_img_from_path(source + name)
+        mask[mask > 4.0] = 255
+        mask[mask <= 4.0] = 0
+        mask = np.concatenate([mask[:, :, None], mask[:, :, None], mask[:, :, None]], axis=2)
+        cv2.imwrite(target + name[:-7] + 'mask.png', mask.astype(np.uint8))
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--source_dir", help="Source directory", required=True)
+    parser.add_argument("--target_dir", help="Target directory", required=True)
+    parser.add_argument("--checkpoint", help="Checkpoint file", required=True)
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    PARAMS = parse_args()
+    main()
