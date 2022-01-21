@@ -139,39 +139,41 @@ class TTAFrame:
 def main():
     # source = 'dataset/test/'
     # source = 'dataset/valid/'
-    source = PARAMS.source_dir
+    source_dir = PARAMS.source_dir
     # target = 'submits/log01_din34/'
-    target = PARAMS.target_dir
+    target_dir = PARAMS.target_dir
     # weights = 'weights/log01_dink34.th'
-    weights = PARAMS.checkpoint
+    checkpoints_dir = PARAMS.checkpoints_dir
+    model = PARAMS.model
 
-    val = os.listdir(source)
+    val = os.listdir(source_dir)
 
     dev = "cuda" if torch.cuda.is_available() else "cpu"
 
     solver = TTAFrame(DinkNet34, dev)
-    solver.load(weights)
+    solver.load(f'{checkpoints_dir}/{model}.th')
 
     tic = time()
 
-    if not os.path.exists(target):
-        os.mkdir(target)
+    if not os.path.exists(target_dir):
+        os.mkdir(target_dir)
 
     for i, name in enumerate(val):
         if i % 10 == 0:
             print(i / 10, '    ', '%.2f' % (time() - tic))
-        mask = solver.test_one_img_from_path(source + name)
+        mask = solver.test_one_img_from_path(source_dir + name)
         mask[mask > 4.0] = 255
         mask[mask <= 4.0] = 0
         mask = np.concatenate([mask[:, :, None], mask[:, :, None], mask[:, :, None]], axis=2)
-        cv2.imwrite(target + name[:-7] + 'mask.png', mask.astype(np.uint8))
+        cv2.imwrite(target_dir + name[:-7] + 'mask.png', mask.astype(np.uint8))
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source_dir", help="Source directory", required=True)
     parser.add_argument("--target_dir", help="Target directory", required=True)
-    parser.add_argument("--checkpoint", help="Checkpoint file", required=True)
+    parser.add_argument("--checkpoints_dir", help="Checkpoint file", required=True)
+    parser.add_argument("--model", help="Model name", default="log01_dink34")
     return parser.parse_args()
 
 
