@@ -155,8 +155,8 @@ def main():
 
     tic = time()
 
-    if not os.path.exists(target_dir):
-        os.mkdir(target_dir)
+    if not os.path.exists(f'{target_dir}/{model}'):
+        os.makedirs(f'{target_dir}/{model}')
 
     for i, name in enumerate(val):
         if i % 10 == 0:
@@ -165,7 +165,7 @@ def main():
         mask[mask > 4.0] = 255
         mask[mask <= 4.0] = 0
         mask = np.concatenate([mask[:, :, None], mask[:, :, None], mask[:, :, None]], axis=2)
-        cv2.imwrite(target_dir + name[:-7] + 'mask.png', mask.astype(np.uint8))
+        cv2.imwrite(f'{target_dir}/{model}/' + name[:-7] + 'mask.png', mask.astype(np.uint8))
 
 
 def parse_args():
