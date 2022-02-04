@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from torchvision import models
 
@@ -192,10 +191,10 @@ class UNet(nn.Module):
         x = features[-1]
         for i in range(len(features) - 2, -1, -1):
             conv = getattr(self, 'shrink%d' % i)
-            x = F.upsample_nearest(x, scale_factor=2)
+            x = nn.functional.interpolate(x, mode='nearest', scale_factor=2)
             x = conv(x)
             if features[i].shape[-1] != x.shape[-1]:
-                x2 = F.upsample_nearest(features[i], scale_factor=2)
+                x2 = nn.functional.interpolate(features[i], mode='nearest', scale_factor=2)
             else:
                 x2 = features[i]
             x = torch.cat([x, x2], 1)
@@ -203,9 +202,9 @@ class UNet(nn.Module):
             x = conv2(x)
             bn = getattr(self, 'batchnorm%d' % i)
             x = bn(x)
-            x = F.relu(x)
+            x = nn.functional.relu(x)
             x = self.dropout(x)
-        x = F.upsample_nearest(x, scale_factor=2)
+        x = nn.functional.interpolate(x, mode='nearest', scale_factor=2)
         logits = self.outc(x)
         return logits
 
