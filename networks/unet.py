@@ -104,7 +104,7 @@ class ResNetUNet(nn.Module):
         """
         Creates a UNet from a pretrained backbone.
         """
-        super(ResNetUNet).__init__()
+        super(ResNetUNet, self).__init__()
 
         backbone = models.resnet18(pretrained=True)
 
@@ -118,7 +118,7 @@ class ResNetUNet(nn.Module):
 
 class SegmentationEncoder(nn.Module):
     def __init__(self, backbone, feature_indices, feature_channels, diff=False):
-        super().__init__()
+        super(SegmentationEncoder, self).__init__()
         self.feature_indices = list(sorted(feature_indices))
 
         # A number of channels for each encoder feature tensor, list of integers
