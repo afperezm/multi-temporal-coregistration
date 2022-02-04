@@ -108,7 +108,7 @@ class ResNetUNet(nn.Module):
 
         backbone = models.resnet18(pretrained=True)
 
-        encoder = SegmentationEncoder(backbone, feature_indices, feature_channels, diff=True)
+        encoder = SegmentationEncoder(backbone, feature_indices, feature_channels)
         self.model = UNet(encoder, feature_channels, 1, bilinear=True, concat_mult=1, dropout_rate=0.3)
 
     def forward(self, x):
@@ -117,7 +117,7 @@ class ResNetUNet(nn.Module):
 
 
 class SegmentationEncoder(nn.Module):
-    def __init__(self, backbone, feature_indices, feature_channels, diff=False):
+    def __init__(self, backbone, feature_indices, feature_channels):
         super(SegmentationEncoder, self).__init__()
         self.feature_indices = list(sorted(feature_indices))
 
@@ -130,9 +130,7 @@ class SegmentationEncoder(nn.Module):
         # Define encoder modules below
         self.encoder = backbone
 
-        self.diff = diff
-
-    def forward(self, x1, x2):
+    def forward(self, x1):
         """Produce list of features of different spatial resolutions, each feature is a 4D torch.tensor of
         shape NCHW (features should be sorted in descending order according to spatial resolution, starting
         with resolution same as input `x` tensor).
@@ -146,22 +144,15 @@ class SegmentationEncoder(nn.Module):
         number of feature tensors = 6 (one with same resolution as input and 5 downsampled),
         depth = 3 -> number of feature tensors = 4 (one with same resolution as input and 3 downsampled).
         """
-        feats = [self.concatenate(x1, x2)]
+        feats = [x1]
         for i, module in enumerate(self.encoder.children()):
             x1 = module(x1)
-            x2 = module(x2)
             if i in self.feature_indices:
-                feats.append(self.concatenate(x1, x2))
+                feats.append(x1)
             if i == self.feature_indices[-1]:
                 break
 
         return feats
-
-    def concatenate(self, x1, x2):
-        if self.diff:
-            return torch.abs(x1 - x2)
-        else:
-            torch.cat([x1, x2], 1)
 
 
 class UNet(nn.Module):
@@ -195,8 +186,8 @@ class UNet(nn.Module):
         self.outc = OutConv(feature_channels[0] * concat_mult, n_classes)
         self.encoder = encoder
 
-    def forward(self, *in_x):
-        features = self.encoder(*in_x)
+    def forward(self, in_x):
+        features = self.encoder(in_x)
         features = features[1:]
         x = features[-1]
         for i in range(len(features) - 2, -1, -1):
