@@ -7,6 +7,7 @@ from data import ImageFolder
 from framework import MyFrame
 from loss import DiceBCELoss
 from networks.dinknet import DinkNet34
+from networks.unet import ResNetUNet
 from torch.utils.data import DataLoader
 
 SHAPE = (1024, 1024)
@@ -18,7 +19,8 @@ def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    solver = MyFrame(DinkNet34, DiceBCELoss, device, 2e-4)
+    # solver = MyFrame(DinkNet34, DiceBCELoss, device, 2e-4)
+    solver = MyFrame(ResNetUNet, DiceBCELoss, device, 2e-4)
 
     if torch.cuda.device_count() > 0:
         batch_size = torch.cuda.device_count() * PARAMS.batch_size
