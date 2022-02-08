@@ -7,7 +7,7 @@ import numpy as np
 
 
 class MyFrame:
-    def __init__(self, net, loss, device, lr=2e-4, eval_mode=False):
+    def __init__(self, net, loss, metric, device, lr=2e-4, eval_mode=False):
         self.device = device
         self.net = net()
         if torch.cuda.device_count() > 0:
@@ -16,6 +16,7 @@ class MyFrame:
         self.optimizer = torch.optim.Adam(params=self.net.parameters(), lr=lr)
         # self.optimizer = torch.optim.RMSprop(params=self.net.parameters(), lr=lr)
         self.loss = loss()
+        self.metric = metric()
         self.old_lr = lr
         if eval_mode:
             for i in self.net.modules():
@@ -65,9 +66,10 @@ class MyFrame:
         self.optimizer.zero_grad()
         pred = self.net.forward(self.img)
         loss = self.loss(self.mask, pred)
+        accuracy = self.metric(self.mask, pred)
         loss.backward()
         self.optimizer.step()
-        return loss.item()
+        return loss.item(), accuracy.item()
 
     def save(self, path):
         torch.save(self.net.state_dict(), path)

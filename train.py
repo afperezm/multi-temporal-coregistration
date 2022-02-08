@@ -6,6 +6,7 @@ import torch
 from data import ImageFolder
 from framework import MyFrame
 from loss import DiceBCELoss
+from metric import BinaryAccuracy
 from networks.dinknet import DinkNet34
 from networks.unet import ResNetUNet
 from torch.utils.data import DataLoader
@@ -20,7 +21,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # solver = MyFrame(DinkNet34, DiceBCELoss, device, 2e-4)
-    solver = MyFrame(ResNetUNet, DiceBCELoss, device, 2e-4)
+    solver = MyFrame(ResNetUNet, DiceBCELoss, BinaryAccuracy, device, 2e-4)
 
     if torch.cuda.device_count() > 0:
         batch_size = torch.cuda.device_count() * PARAMS.batch_size
@@ -41,18 +42,23 @@ def main():
     for epoch in range(1, total_epoch + 1):
         data_loader_iter = iter(train_dataloader)
         train_epoch_loss = 0
+        train_epoch_accuracy = 0
         for img, mask in data_loader_iter:
             solver.set_input(img, mask)
-            train_loss = solver.optimize()
+            train_loss, train_accuracy = solver.optimize()
             train_epoch_loss += train_loss
+            train_epoch_accuracy += train_accuracy
         train_epoch_loss /= len(data_loader_iter)
+        train_epoch_accuracy /= len(data_loader_iter)
         print('********', file=my_log)
         print('epoch:', epoch, '    time:', int(time() - tic), file=my_log)
         print('train_loss:', train_epoch_loss, file=my_log)
+        print('train_accuracy:', train_epoch_accuracy, file=my_log)
         print('SHAPE:', SHAPE, file=my_log)
         print('********')
         print('epoch:', epoch, '    time:', int(time() - tic))
         print('train_loss:', train_epoch_loss)
+        print('train_accuracy:', train_epoch_accuracy)
         print('SHAPE:', SHAPE)
 
         if train_epoch_loss >= train_epoch_best_loss:
