@@ -140,14 +140,14 @@ class TTAFrame:
 def main():
     # source = 'dataset/test/'
     # source = 'dataset/valid/'
-    source_dir = PARAMS.source_dir
+    data_dir = PARAMS.data_dir
     # target = 'submits/log01_din34/'
-    target_dir = PARAMS.target_dir
+    output_dir = PARAMS.output_dir
     # weights = 'weights/log01_dink34.th'
     checkpoints_dir = PARAMS.checkpoints_dir
     model = PARAMS.model
 
-    val = [img for img in os.listdir(source_dir) if img.endswith('_sat.jpg')]
+    val = [img for img in os.listdir(data_dir) if img.endswith('_sat.jpg')]
 
     dev = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -156,23 +156,23 @@ def main():
 
     tic = time()
 
-    if not os.path.exists(f'{target_dir}/{model}'):
-        os.makedirs(f'{target_dir}/{model}')
+    if not os.path.exists(f'{output_dir}/{model}'):
+        os.makedirs(f'{output_dir}/{model}')
 
     for i, name in enumerate(val):
         if i % 10 == 0:
             print(i / 10, '    ', '%.2f' % (time() - tic))
-        mask = solver.test_one_img_from_path(source_dir + name)
+        mask = solver.test_one_img_from_path(data_dir + name)
         mask[mask > 4.0] = 255
         mask[mask <= 4.0] = 0
         mask = np.concatenate([mask[:, :, None], mask[:, :, None], mask[:, :, None]], axis=2)
-        cv2.imwrite(f'{target_dir}/{model}/' + name[:-7] + 'mask.png', mask.astype(np.uint8))
+        cv2.imwrite(f'{output_dir}/{model}/' + name[:-7] + 'mask.png', mask.astype(np.uint8))
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source_dir", help="Source directory", required=True)
-    parser.add_argument("--target_dir", help="Target directory", required=True)
+    parser.add_argument("--data_dir", help="Dataset directory", required=True)
+    parser.add_argument("--output_dir", help="Output directory", required=True)
     parser.add_argument("--checkpoints_dir", help="Checkpoint file", required=True)
     parser.add_argument("--model", help="Model name", default="log01_dink34")
     return parser.parse_args()
