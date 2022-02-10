@@ -5,6 +5,7 @@ import numpy as np
 import os
 import torch
 
+from sklearn.metrics import jaccard_score
 from networks.dinknet import DinkNet34
 from time import time
 from torch.autograd import Variable as V
@@ -159,6 +160,8 @@ def main():
     if not os.path.exists(f'{output_dir}/{model}'):
         os.makedirs(f'{output_dir}/{model}')
 
+    total_accuracy = 0.0
+
     for i, name in enumerate(val):
         if i % 10 == 0:
             print(i / 10, '    ', '%.2f' % (time() - tic))
@@ -167,6 +170,20 @@ def main():
         mask[mask <= 4.0] = 0
         mask = np.concatenate([mask[:, :, None], mask[:, :, None], mask[:, :, None]], axis=2)
         cv2.imwrite(f'{output_dir}/{model}/' + name[:-7] + 'mask.png', mask.astype(np.uint8))
+
+        mask = mask[:, :, 0]
+        mask = mask / 255.0
+        mask[mask >= 0.5] = 1.0
+        mask[mask <= 0.5] = 0.0
+
+        mask_gt = cv2.imread(data_dir + name.replace('_sat.jpg', '_mask.png'), cv2.IMREAD_GRAYSCALE)
+        mask_gt = np.array(mask_gt, np.float32) / 255.0
+        mask_gt[mask_gt >= 0.5] = 1.0
+        mask_gt[mask_gt <= 0.5] = 0.0
+
+        total_accuracy += jaccard_score(mask_gt.flatten(), mask.flatten())
+
+    print(f'Total accuracy: {total_accuracy / len(val):.2f}')
 
 
 def parse_args():
