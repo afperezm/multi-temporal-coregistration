@@ -171,9 +171,9 @@ class DLinkNet18(nn.Module):
         return torch.sigmoid(out)
 
 
-class DinkNet34LessPool(nn.Module):
+class DLinkNet34LessPool(nn.Module):
     def __init__(self, num_classes=1):
-        super(DinkNet34LessPool, self).__init__()
+        super(DLinkNet34LessPool, self).__init__()
 
         filters = [64, 128, 256, 512]
         resnet = models.resnet34(pretrained=True)
@@ -226,9 +226,9 @@ class DinkNet34LessPool(nn.Module):
         return torch.sigmoid(out)
 
 
-class DinkNet34(nn.Module):
+class DLinkNet34(nn.Module):
     def __init__(self, num_classes=1, num_channels=3):
-        super(DinkNet34, self).__init__()
+        super(DLinkNet34, self).__init__()
 
         filters = [64, 128, 256, 512]
         resnet = models.resnet34(pretrained=True)
@@ -283,9 +283,9 @@ class DinkNet34(nn.Module):
         return torch.sigmoid(out)
 
 
-class DinkNet50(nn.Module):
-    def __init__(self, num_classes=1):
-        super(DinkNet50, self).__init__()
+class DLinkNet50(nn.Module):
+    def __init__(self, backbone_type='imagenet', num_classes=1):
+        super(DLinkNet50, self).__init__()
 
         filters = [256, 512, 1024, 2048]
         resnet = models.resnet50(pretrained=True)
@@ -330,6 +330,7 @@ class DinkNet50(nn.Module):
         d3 = self.decoder3(d4) + e2
         d2 = self.decoder2(d3) + e1
         d1 = self.decoder1(d2)
+
         out = self.final_deconv1(d1)
         out = self.final_relu1(out)
         out = self.final_conv2(out)
@@ -339,9 +340,9 @@ class DinkNet50(nn.Module):
         return torch.sigmoid(out)
 
 
-class DinkNet101(nn.Module):
+class DLinkNet101(nn.Module):
     def __init__(self, num_classes=1):
-        super(DinkNet101, self).__init__()
+        super(DLinkNet101, self).__init__()
 
         filters = [256, 512, 1024, 2048]
         resnet = models.resnet101(pretrained=True)

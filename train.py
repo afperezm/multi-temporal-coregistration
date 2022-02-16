@@ -7,7 +7,7 @@ from data import ImageFolder
 from framework import MyFrame
 from loss import DiceBCELoss
 from metric import BinaryAccuracy
-from networks.dinknet import DinkNet34
+from networks.dinknet import DLinkNet34
 from networks.unet import ResNetUNet
 from torch.utils.data import DataLoader
 

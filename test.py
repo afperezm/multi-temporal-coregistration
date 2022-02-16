@@ -6,7 +6,7 @@ import os
 import torch
 
 from sklearn.metrics import jaccard_score
-from networks.dinknet import DinkNet34
+from networks.dinknet import DLinkNet34
 from time import time
 from torch.autograd import Variable as V
 
@@ -152,7 +152,7 @@ def main():
 
     dev = "cuda" if torch.cuda.is_available() else "cpu"
 
-    solver = TTAFrame(DinkNet34, dev)
+    solver = TTAFrame(DLinkNet34, dev)
     solver.load(f'{checkpoints_dir}/{model}.th')
 
     tic = time()
