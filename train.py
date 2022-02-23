@@ -20,9 +20,9 @@ def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # solver = MyFrame(DLinkNet18, DiceBCELoss, device, 2e-4)
-    # solver = MyFrame(DLinkNet34, DiceBCELoss, device, 2e-4)
-    # solver = MyFrame(DLinkNet50, DiceBCELoss, device, 2e-4)
+    # solver = MyFrame(DLinkNet18, DiceBCELoss, BinaryAccuracy, device, 2e-4)
+    # solver = MyFrame(DLinkNet34, DiceBCELoss, BinaryAccuracy, device, 2e-4)
+    # solver = MyFrame(DLinkNet50, DiceBCELoss, BinaryAccuracy, device, 2e-4)
     solver = MyFrame(ResNetUNet, DiceBCELoss, BinaryAccuracy, device, 2e-4)
 
     if torch.cuda.device_count() > 0:
