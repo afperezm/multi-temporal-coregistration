@@ -13,7 +13,15 @@ class MyFrame:
         if torch.cuda.device_count() > 0:
             self.net = torch.nn.DataParallel(self.net, device_ids=range(torch.cuda.device_count()))
         self.net = self.net.to(self.device)
-        self.optimizer = torch.optim.Adam(params=self.net.parameters(), lr=lr)
+        encoder_params = {*self.net.first_conv.parameters(),
+                          *self.net.first_bn.parameters(),
+                          *self.net.first_relu.parameters(),
+                          *self.net.first_max_pool.parameters(),
+                          *self.net.encoder1.parameters(),
+                          *self.net.encoder2.parameters(),
+                          *self.net.encoder3.parameters(),
+                          *self.net.encoder4.parameters()}
+        self.optimizer = torch.optim.Adam(params=set(self.net.parameters()).difference(encoder_params), lr=lr)
         # self.optimizer = torch.optim.RMSprop(params=self.net.parameters(), lr=lr)
         self.loss = loss()
         self.metric = metric()
