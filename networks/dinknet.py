@@ -8,7 +8,9 @@ import torch.nn.functional as F
 
 from copy import deepcopy
 from functools import partial
+
 from models.moco2_module import MocoV2
+from torchvision.models.resnet import BasicBlock
 from torchvision import models
 
 non_linearity = partial(F.relu, inplace=True)
@@ -89,6 +91,54 @@ class DecoderBlock(nn.Module):
         return x
 
 
+class HeadBlock(nn.Module):
+    def __init__(self, n_filters):
+        super(HeadBlock, self).__init__()
+
+        home_dir = os.environ['HOME']
+        ckpt_dir = os.path.join(home_dir, 'checkpoints')
+        ckpt_path = f'{ckpt_dir}/seasonal-contrast/seco_resnet18_1m.ckpt'
+
+        model = MocoV2.load_from_checkpoint(ckpt_path)
+        self.heads = deepcopy(model.heads_q)
+        del model
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        # self.feat_encoder = nn.Sequential(
+        #     nn.Conv2d(n_filters, n_filters, kernel_size=3, stride=4),
+        #     nn.BatchNorm2d(n_filters),
+        #     nn.ReLU(inplace=True)
+        # )
+        self.gate_encoder = nn.Sequential(
+            nn.Conv2d(6, n_filters, kernel_size=1, stride=1),
+            nn.BatchNorm2d(n_filters),
+            nn.ReLU(inplace=True)
+        )
+        # down_sample = nn.Sequential(
+        #     nn.Conv2d(6, n_filters, kernel_size=1, stride=2, bias=False),
+        #     nn.BatchNorm2d(n_filters)
+        # )
+        # self.gate_encoder = nn.Sequential(
+        #     BasicBlock(6, n_filters, stride=2, downsample=down_sample, groups=1,
+        #                base_width=64, dilation=1,
+        #                norm_layer=nn.BatchNorm2d),
+        #     BasicBlock(n_filters, n_filters, stride=1, downsample=None, groups=1,
+        #                base_width=64, dilation=1,
+        #                norm_layer=nn.BatchNorm2d)
+        # )
+
+    def forward(self, x):
+        x = self.avg_pool(x)
+        x = torch.flatten(x, 1)
+
+        x = torch.cat([h(x) for h in self.heads], 1)
+        x = x.view(-1, 6, 8, 8)
+
+        # f = self.feat_encoder(e4)
+        x = self.gate_encoder(x)
+
+        return x
+
+
 class DLinkNet18(nn.Module):
     def __init__(self, backbone_type='imagenet', num_classes=1, num_channels=3):
         super(DLinkNet18, self).__init__()
@@ -119,6 +169,19 @@ class DLinkNet18(nn.Module):
             self.encoder2 = resnet[5]
             self.encoder3 = resnet[6]
             self.encoder4 = resnet[7]
+            down_sample = nn.Sequential(
+                nn.Conv2d(512, 512, kernel_size=1, stride=2, bias=False),
+                nn.BatchNorm2d(512)
+            )
+            self.encoder5 = nn.Sequential(
+                BasicBlock(512, 512, stride=2, downsample=down_sample, groups=1,
+                           base_width=64, dilation=1,
+                           norm_layer=nn.BatchNorm2d),
+                BasicBlock(512, 512, stride=1, downsample=None, groups=1,
+                           base_width=64, dilation=1,
+                           norm_layer=nn.BatchNorm2d)
+            )
+            self.encoder6 = HeadBlock(512)
         else:
             self.first_conv = resnet.conv1
             self.first_bn = resnet.bn1
@@ -128,9 +191,17 @@ class DLinkNet18(nn.Module):
             self.encoder2 = resnet.layer2
             self.encoder3 = resnet.layer3
             self.encoder4 = resnet.layer4
+            self.encoder5 = nn.Identity()
+            self.encoder6 = nn.Identity()
 
         self.d_block = DBlock(512)
 
+        if backbone_type == 'pretrain':
+            self.decoder6 = DecoderBlock(filters[3], filters[3])
+            self.decoder5 = DecoderBlock(filters[3], filters[3])
+        else:
+            self.decoder6 = nn.Identity()
+            self.decoder5 = nn.Identity()
         self.decoder4 = DecoderBlock(filters[3], filters[2])
         self.decoder3 = DecoderBlock(filters[2], filters[1])
         self.decoder2 = DecoderBlock(filters[1], filters[0])
@@ -152,12 +223,16 @@ class DLinkNet18(nn.Module):
         e2 = self.encoder2(e1)
         e3 = self.encoder3(e2)
         e4 = self.encoder4(e3)
+        e5 = self.encoder5(e4)
+        e6 = self.encoder6(e5)
 
         # Center
-        e4 = self.d_block(e4)
+        e6 = self.d_block(e6)
 
         # Decoder
-        d4 = self.decoder4(e4) + e3
+        d6 = self.decoder6(e6) + e5
+        d5 = self.decoder5(d6) + e4
+        d4 = self.decoder4(d5) + e3
         d3 = self.decoder3(d4) + e2
         d2 = self.decoder2(d3) + e1
         d1 = self.decoder1(d2)
