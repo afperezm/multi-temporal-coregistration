@@ -20,7 +20,8 @@ class MyFrame:
                           *self.net.encoder1.parameters(),
                           *self.net.encoder2.parameters(),
                           *self.net.encoder3.parameters(),
-                          *self.net.encoder4.parameters()}
+                          *self.net.encoder4.parameters(),
+                          *self.net.encoder6.heads.parameters()}
         self.optimizer = torch.optim.Adam(params=set(self.net.parameters()).difference(encoder_params), lr=lr)
         # self.optimizer = torch.optim.RMSprop(params=self.net.parameters(), lr=lr)
         self.loss = loss()
