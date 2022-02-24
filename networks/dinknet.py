@@ -100,41 +100,40 @@ class HeadBlock(nn.Module):
         ckpt_path = f'{ckpt_dir}/seasonal-contrast/seco_resnet18_1m.ckpt'
 
         model = MocoV2.load_from_checkpoint(ckpt_path)
+
         self.heads = deepcopy(model.heads_q)
-        del model
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-        # self.feat_encoder = nn.Sequential(
-        #     nn.Conv2d(n_filters, n_filters, kernel_size=3, stride=4),
-        #     nn.BatchNorm2d(n_filters),
-        #     nn.ReLU(inplace=True)
-        # )
+
+        self.feat_encoder = nn.Sequential(
+            nn.Conv2d(n_filters, n_filters, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(n_filters),
+            nn.ReLU(inplace=True)
+        )
         self.gate_encoder = nn.Sequential(
             nn.Conv2d(6, n_filters, kernel_size=1, stride=1),
             nn.BatchNorm2d(n_filters),
             nn.ReLU(inplace=True)
         )
-        # down_sample = nn.Sequential(
-        #     nn.Conv2d(6, n_filters, kernel_size=1, stride=2, bias=False),
-        #     nn.BatchNorm2d(n_filters)
-        # )
-        # self.gate_encoder = nn.Sequential(
-        #     BasicBlock(6, n_filters, stride=2, downsample=down_sample, groups=1,
-        #                base_width=64, dilation=1,
-        #                norm_layer=nn.BatchNorm2d),
-        #     BasicBlock(n_filters, n_filters, stride=1, downsample=None, groups=1,
-        #                base_width=64, dilation=1,
-        #                norm_layer=nn.BatchNorm2d)
-        # )
+        self.join_encoder = nn.Sequential(
+            nn.Conv2d(2 * n_filters, n_filters, kernel_size=1, stride=1),
+            nn.BatchNorm2d(n_filters),
+            nn.ReLU(inplace=True)
+        )
 
     def forward(self, x):
-        x = self.avg_pool(x)
-        x = torch.flatten(x, 1)
 
-        x = torch.cat([h(x) for h in self.heads], 1)
-        x = x.view(-1, 6, 8, 8)
+        f = self.feat_encoder(x)
 
-        # f = self.feat_encoder(e4)
-        x = self.gate_encoder(x)
+        h = self.avg_pool(x)
+        h = torch.flatten(h, 1)
+
+        h = torch.cat([head(h) for head in self.heads], 1)
+        h = h.view(-1, 6, 8, 8)
+
+        h = self.gate_encoder(h)
+
+        x = torch.cat((f, h), 1)
+        x = self.join_encoder(x)
 
         return x
 
