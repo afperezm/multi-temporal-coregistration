@@ -316,9 +316,9 @@ class DLinkNet34(nn.Module):
         self.encoder4 = resnet.layer4
 
         self.d_block4 = DBlock(512)
-        self.d_block3 = DBlock(512)
-        self.d_block2 = DBlock(512)
-        self.d_block1 = DBlock(512)
+        self.d_block3 = DBlock(256)
+        self.d_block2 = DBlock(128)
+        self.d_block1 = DBlock(64)
 
         self.decoder4 = DecoderBlock(filters[3], filters[2])
         self.decoder3 = DecoderBlock(filters[2], filters[1])
