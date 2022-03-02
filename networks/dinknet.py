@@ -139,7 +139,7 @@ class HeadBlock(nn.Module):
 
 
 class DLinkNet18(nn.Module):
-    def __init__(self, backbone_type='imagenet', num_classes=1, num_channels=3):
+    def __init__(self, backbone_type='pretrain', num_classes=1, num_channels=3):
         super(DLinkNet18, self).__init__()
 
         filters = [64, 128, 256, 512]
