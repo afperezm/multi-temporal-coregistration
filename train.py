@@ -7,7 +7,8 @@ from data import ImageFolder
 from framework import MyFrame
 from loss import DiceBCELoss
 from metric import BinaryAccuracy
-# from networks.dinknet import DLinkNet18, DLinkNet34, DLinkNet50
+from networks.dinknet import DLinkNet18
+# from networks.dinknet import DLinkNet34, DLinkNet50
 from networks.unet import ResNetUNet
 from torch.utils.data import DataLoader
 
@@ -20,10 +21,10 @@ def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # solver = MyFrame(DLinkNet18, DiceBCELoss, BinaryAccuracy, device, 2e-4)
+    solver = MyFrame(DLinkNet18, DiceBCELoss, BinaryAccuracy, device, 2e-4)
     # solver = MyFrame(DLinkNet34, DiceBCELoss, BinaryAccuracy, device, 2e-4)
     # solver = MyFrame(DLinkNet50, DiceBCELoss, BinaryAccuracy, device, 2e-4)
-    solver = MyFrame(ResNetUNet, DiceBCELoss, BinaryAccuracy, device, 2e-4)
+    # solver = MyFrame(ResNetUNet, DiceBCELoss, BinaryAccuracy, device, 2e-4)
 
     if torch.cuda.device_count() > 0:
         batch_size = torch.cuda.device_count() * PARAMS.batch_size
