@@ -155,3 +155,48 @@ class MultiHeadCrossAttention(nn.Module):
         Z = torch.cat([Z, Y2], dim=1)
 
         return Z
+
+
+class CrossAttention(nn.Module):
+    def __init__(self, num_y_channels, num_s_channels):
+        super(CrossAttention, self).__init__()
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(num_y_channels, num_s_channels, kernel_size=1),
+            nn.BatchNorm2d(num_s_channels),
+            nn.ReLU(inplace=True)
+        )
+
+        self.query = MultiHeadDense(num_s_channels)
+        self.key = MultiHeadDense(num_s_channels)
+        self.value = MultiHeadDense(num_s_channels)
+
+        self.softmax = nn.Softmax(dim=1)
+
+        self.s_pos_encoder = PositionalEncodingPermute2D(num_s_channels)
+        self.y_pos_encoder = PositionalEncodingPermute2D(num_y_channels)
+
+    def forward(self, y, s):
+
+        sb, sc, sh, sw = s.size()
+
+        y = torch.unsqueeze(torch.unsqueeze(y, 2), 2)
+        y = y.repeat(1, 1, sh, sw)
+
+        yb, yc, yh, yw = y.size()
+
+        s += self.s_pos_encoder(s)
+        s1 = s.reshape(yb, sc, yh * yw).permute(0, 2, 1)
+
+        v = self.value(s1)
+
+        y += self.y_pos_encoder(y)
+        y1 = self.conv(y).reshape(yb, sc, yh * yw).permute(0, 2, 1)
+
+        q = self.query(y1)
+        k = self.key(y1)
+        a = self.softmax(torch.bmm(q, k.permute(0, 2, 1)) / math.sqrt(sc))
+
+        z = torch.bmm(a, v).permute(0, 2, 1).reshape(yb, sc, yh, yw)
+
+        return z
