@@ -185,17 +185,19 @@ class CrossAttention(nn.Module):
 
         yb, yc, yh, yw = y.size()
 
-        s += self.s_pos_encoder(s)
-        s1 = s.reshape(yb, sc, yh * yw).permute(0, 2, 1)
+        spe = self.s_pos_encoder(s)
+        s = s + spe
+        s = s.reshape(yb, sc, yh * yw).permute(0, 2, 1)
 
-        v = self.value(s1)
+        ype = self.y_pos_encoder(y)
+        y = y + ype
+        y = self.conv(y).reshape(yb, sc, yh * yw).permute(0, 2, 1)
 
-        y += self.y_pos_encoder(y)
-        y1 = self.conv(y).reshape(yb, sc, yh * yw).permute(0, 2, 1)
-
-        q = self.query(y1)
-        k = self.key(y1)
+        q = self.query(y)
+        k = self.key(y)
         a = self.softmax(torch.bmm(q, k.permute(0, 2, 1)) / math.sqrt(sc))
+
+        v = self.value(s)
 
         z = torch.bmm(a, v).permute(0, 2, 1).reshape(yb, sc, yh, yw)
 
