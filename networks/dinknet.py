@@ -93,6 +93,74 @@ class DecoderBlock(nn.Module):
         return x
 
 
+class DLinkNet18(nn.Module):
+    def __init__(self, backbone='seco-1m', num_classes=1):
+        super(DLinkNet18, self).__init__()
+
+        filters = [64, 128, 256, 512]
+
+        if backbone == 'random':
+            resnet = models.resnet18(pretrained=False)
+        elif backbone == 'imagenet':
+            resnet = models.resnet18(pretrained=True)
+        elif backbone == 'seco-100k':
+            resnet = moco.resnet18(large=False)
+        elif backbone == 'seco-1m':
+            resnet = moco.resnet18(large=True)
+        else:
+            raise ValueError()
+
+        self.first_conv = resnet.conv1
+        self.first_bn = resnet.bn1
+        self.first_relu = resnet.relu
+        self.first_max_pool = resnet.maxpool
+        self.encoder1 = resnet.layer1
+        self.encoder2 = resnet.layer2
+        self.encoder3 = resnet.layer3
+        self.encoder4 = resnet.layer4
+
+        self.d_block = DBlock(512)
+
+        self.decoder4 = DecoderBlock(filters[3], filters[2])
+        self.decoder3 = DecoderBlock(filters[2], filters[1])
+        self.decoder2 = DecoderBlock(filters[1], filters[0])
+        self.decoder1 = DecoderBlock(filters[0], filters[0])
+
+        self.final_deconv1 = nn.ConvTranspose2d(filters[0], 32, 4, 2, 1)
+        self.final_relu1 = non_linearity
+        self.final_conv2 = nn.Conv2d(32, 32, 3, padding=1)
+        self.final_relu2 = non_linearity
+        self.final_conv3 = nn.Conv2d(32, num_classes, 3, padding=1)
+
+    def forward(self, x):
+        # Encoder
+        x = self.first_conv(x)
+        x = self.first_bn(x)
+        x = self.first_relu(x)
+        x = self.first_max_pool(x)
+        e1 = self.encoder1(x)
+        e2 = self.encoder2(e1)
+        e3 = self.encoder3(e2)
+        e4 = self.encoder4(e3)
+
+        # Center
+        e4 = self.d_block(e4)
+
+        # Decoder
+        d4 = self.decoder4(e4) + e3
+        d3 = self.decoder3(d4) + e2
+        d2 = self.decoder2(d3) + e1
+        d1 = self.decoder1(d2)
+
+        out = self.final_deconv1(d1)
+        out = self.final_relu1(out)
+        out = self.final_conv2(out)
+        out = self.final_relu2(out)
+        out = self.final_conv3(out)
+
+        return torch.sigmoid(out)
+
+
 class HeadBlock(nn.Module):
     def __init__(self, n_filters):
         super(HeadBlock, self).__init__()
@@ -140,28 +208,24 @@ class HeadBlock(nn.Module):
         return x
 
 
-class DLinkNet18(nn.Module):
-    def __init__(self, backbone_type='pretrain', num_classes=1, num_channels=3):
-        super(DLinkNet18, self).__init__()
+class DLinkNet18HeadsV1(nn.Module):
+    def __init__(self, backbone='seco-1m', num_classes=1):
+        super(DLinkNet18HeadsV1, self).__init__()
 
         filters = [64, 128, 256, 512]
 
-        if backbone_type == 'random':
+        if backbone == 'random':
             resnet = models.resnet18(pretrained=False)
-        elif backbone_type == 'imagenet':
+        elif backbone == 'imagenet':
             resnet = models.resnet18(pretrained=True)
-        elif backbone_type == 'pretrain':
-            home_dir = os.environ['HOME']
-            ckpt_dir = os.path.join(home_dir, 'checkpoints')
-            # ckpt_path = f'{ckpt_dir}/seasonal-contrast/seco_resnet18_100k.ckpt'
-            ckpt_path = f'{ckpt_dir}/seasonal-contrast/seco_resnet18_1m.ckpt'
-            model = MocoV2.load_from_checkpoint(ckpt_path)
-            resnet = deepcopy(model.encoder_q)
-            del model
+        elif backbone == 'seco-100k':
+            resnet = moco.resnet18(large=False)
+        elif backbone == 'seco-1m':
+            resnet = moco.resnet18(large=True)
         else:
             raise ValueError()
 
-        if backbone_type == 'pretrain':
+        if backbone == 'pretrain':
             self.first_conv = resnet[0]
             self.first_bn = resnet[1]
             self.first_relu = resnet[2]
@@ -197,7 +261,7 @@ class DLinkNet18(nn.Module):
 
         self.d_block = DBlock(512)
 
-        if backbone_type == 'pretrain':
+        if backbone == 'pretrain':
             self.decoder6 = DecoderBlock(filters[3], filters[3])
             self.decoder5 = DecoderBlock(filters[3], filters[3])
         else:
