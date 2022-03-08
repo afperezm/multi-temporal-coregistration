@@ -535,44 +535,30 @@ class DLinkNet34(nn.Module):
 
 
 class DLinkNet50(nn.Module):
-    def __init__(self, backbone_type='imagenet', num_classes=1):
+    def __init__(self, backbone='imagenet', num_classes=1):
         super(DLinkNet50, self).__init__()
 
         filters = [256, 512, 1024, 2048]
 
-        if backbone_type == 'random':
+        if backbone == 'random':
             resnet = models.resnet50(pretrained=False)
-        elif backbone_type == 'imagenet':
+        elif backbone == 'imagenet':
             resnet = models.resnet50(pretrained=True)
-        elif backbone_type == 'pretrain':
-            home_dir = os.environ['HOME']
-            ckpt_dir = os.path.join(home_dir, 'checkpoints')
-            # ckpt_path = f'{ckpt_dir}/seasonal-contrast/seco_resnet50_100k.ckpt'
-            ckpt_path = f'{ckpt_dir}/seasonal-contrast/seco_resnet50_1m.ckpt'
-            model = MocoV2.load_from_checkpoint(ckpt_path)
-            resnet = deepcopy(model.encoder_q)
-            del model
+        elif backbone == 'seco-100k':
+            resnet = moco.resnet50(large=False)
+        elif backbone == 'seco-1m':
+            resnet = moco.resnet50(large=True)
         else:
             raise ValueError()
 
-        if backbone_type == 'pretrain':
-            self.first_conv = resnet[0]
-            self.first_bn = resnet[1]
-            self.first_relu = resnet[2]
-            self.first_max_pool = resnet[3]
-            self.encoder1 = resnet[4]
-            self.encoder2 = resnet[5]
-            self.encoder3 = resnet[6]
-            self.encoder4 = resnet[7]
-        else:
-            self.first_conv = resnet.conv1
-            self.first_bn = resnet.bn1
-            self.first_relu = resnet.relu
-            self.first_max_pool = resnet.maxpool
-            self.encoder1 = resnet.layer1
-            self.encoder2 = resnet.layer2
-            self.encoder3 = resnet.layer3
-            self.encoder4 = resnet.layer4
+        self.first_conv = resnet.conv1
+        self.first_bn = resnet.bn1
+        self.first_relu = resnet.relu
+        self.first_max_pool = resnet.maxpool
+        self.encoder1 = resnet.layer1
+        self.encoder2 = resnet.layer2
+        self.encoder3 = resnet.layer3
+        self.encoder4 = resnet.layer4
 
         self.d_block = DBlockMoreDilate(2048)
 
