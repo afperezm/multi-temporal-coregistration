@@ -163,53 +163,6 @@ class DLinkNet18(nn.Module):
         return torch.sigmoid(out)
 
 
-class HeadBlock(nn.Module):
-    def __init__(self, n_filters):
-        super(HeadBlock, self).__init__()
-
-        home_dir = os.environ['HOME']
-        ckpt_dir = os.path.join(home_dir, 'checkpoints')
-        ckpt_path = f'{ckpt_dir}/seasonal-contrast/seco_resnet18_1m.ckpt'
-
-        model = MocoV2.load_from_checkpoint(ckpt_path)
-
-        self.heads = deepcopy(model.heads_q)
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-
-        self.feat_encoder = nn.Sequential(
-            nn.Conv2d(n_filters, n_filters, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(n_filters),
-            nn.ReLU(inplace=True)
-        )
-        self.gate_encoder = nn.Sequential(
-            nn.Conv2d(6, n_filters, kernel_size=1, stride=1),
-            nn.BatchNorm2d(n_filters),
-            nn.ReLU(inplace=True)
-        )
-        self.join_encoder = nn.Sequential(
-            nn.Conv2d(2 * n_filters, n_filters, kernel_size=1, stride=1),
-            nn.BatchNorm2d(n_filters),
-            nn.ReLU(inplace=True)
-        )
-
-    def forward(self, x):
-
-        f = self.feat_encoder(x)
-
-        h = self.avg_pool(x)
-        h = torch.flatten(h, 1)
-
-        h = torch.cat([head(h) for head in self.heads], 1)
-        h = h.view(-1, 6, 8, 8)
-
-        h = self.gate_encoder(h)
-
-        x = torch.cat((f, h), 1)
-        x = self.join_encoder(x)
-
-        return x
-
-
 class DLinkNet18HeadsV1(nn.Module):
     def __init__(self, backbone='seco-1m', num_classes=1):
         super(DLinkNet18HeadsV1, self).__init__()
@@ -227,48 +180,52 @@ class DLinkNet18HeadsV1(nn.Module):
         else:
             raise ValueError()
 
-        if backbone == 'pretrain':
-            self.first_conv = resnet[0]
-            self.first_bn = resnet[1]
-            self.first_relu = resnet[2]
-            self.first_max_pool = resnet[3]
-            self.encoder1 = resnet[4]
-            self.encoder2 = resnet[5]
-            self.encoder3 = resnet[6]
-            self.encoder4 = resnet[7]
-            down_sample = nn.Sequential(
+        self.first_conv = resnet.conv1
+        self.first_bn = resnet.bn1
+        self.first_relu = resnet.relu
+        self.first_max_pool = resnet.maxpool
+        self.encoder1 = resnet.layer1
+        self.encoder2 = resnet.layer2
+        self.encoder3 = resnet.layer3
+        self.encoder4 = resnet.layer4
+        self.encoder5 = nn.Sequential(
+            BasicBlock(512, 512, stride=2, downsample=nn.Sequential(
                 nn.Conv2d(512, 512, kernel_size=1, stride=2, bias=False),
                 nn.BatchNorm2d(512)
-            )
-            self.encoder5 = nn.Sequential(
-                BasicBlock(512, 512, stride=2, downsample=down_sample, groups=1,
-                           base_width=64, dilation=1,
-                           norm_layer=nn.BatchNorm2d),
-                BasicBlock(512, 512, stride=1, downsample=None, groups=1,
-                           base_width=64, dilation=1,
-                           norm_layer=nn.BatchNorm2d)
-            )
-            self.encoder6 = HeadBlock(512)
-        else:
-            self.first_conv = resnet.conv1
-            self.first_bn = resnet.bn1
-            self.first_relu = resnet.relu
-            self.first_max_pool = resnet.maxpool
-            self.encoder1 = resnet.layer1
-            self.encoder2 = resnet.layer2
-            self.encoder3 = resnet.layer3
-            self.encoder4 = resnet.layer4
-            self.encoder5 = nn.Identity()
-            self.encoder6 = nn.Identity()
+            ),
+                       groups=1,
+                       base_width=64, dilation=1,
+                       norm_layer=nn.BatchNorm2d),
+            BasicBlock(512, 512, stride=1, downsample=None,
+                       groups=1,
+                       base_width=64, dilation=1,
+                       norm_layer=nn.BatchNorm2d)
+        )
+
+        self.head1 = moco.resnet18_heads(large=True, index=0)
+        self.head2 = moco.resnet18_heads(large=True, index=1)
+        self.head3 = moco.resnet18_heads(large=True, index=2)
+
+        self.feat_encoder = nn.Sequential(
+            nn.Conv2d(filters[3], filters[3], kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(filters[3]),
+            nn.ReLU(inplace=True)
+        )
+        self.gate_encoder = nn.Sequential(
+            nn.Conv2d(6, filters[3], kernel_size=1, stride=1),
+            nn.BatchNorm2d(filters[3]),
+            nn.ReLU(inplace=True)
+        )
+        self.join_encoder = nn.Sequential(
+            nn.Conv2d(2 * filters[3], filters[3], kernel_size=1, stride=1),
+            nn.BatchNorm2d(filters[3]),
+            nn.ReLU(inplace=True)
+        )
 
         self.d_block = DBlock(512)
 
-        if backbone == 'pretrain':
-            self.decoder6 = DecoderBlock(filters[3], filters[3])
-            self.decoder5 = DecoderBlock(filters[3], filters[3])
-        else:
-            self.decoder6 = nn.Identity()
-            self.decoder5 = nn.Identity()
+        self.decoder6 = DecoderBlock(filters[3], filters[3])
+        self.decoder5 = DecoderBlock(filters[3], filters[3])
         self.decoder4 = DecoderBlock(filters[3], filters[2])
         self.decoder3 = DecoderBlock(filters[2], filters[1])
         self.decoder2 = DecoderBlock(filters[1], filters[0])
@@ -291,10 +248,22 @@ class DLinkNet18HeadsV1(nn.Module):
         e3 = self.encoder3(e2)
         e4 = self.encoder4(e3)
         e5 = self.encoder5(e4)
-        e6 = self.encoder6(e5)
+
+        h0 = self.head1(e5)
+        h1 = self.head2(e5)
+        h2 = self.head3(e5)
+
+        h = torch.cat([h0, h1, h2], dim=1)
+        h = h.view(-1, 6, 8, 8)
+
+        f = self.feat_encoder(e5)
+        h = self.gate_encoder(h)
+
+        g = torch.cat((f, h), 1)
+        g = self.join_encoder(g)
 
         # Center
-        e6 = self.d_block(e6)
+        e6 = self.d_block(g)
 
         # Decoder
         d6 = self.decoder6(e6) + e5
