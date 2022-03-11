@@ -1,6 +1,7 @@
 import os
 import sys
 import torch
+import torch.nn as nn
 
 from copy import deepcopy
 from models.moco2_module import MocoV2
@@ -61,7 +62,17 @@ def resnet18_heads(large=True, index=1):
 
     model = MocoV2.load_from_checkpoint(ckpt_path)
 
-    head = deepcopy(model.heads_q[index])
+    mlp1 = deepcopy(model.heads_q[index][0])
+    mlp2 = deepcopy(model.heads_q[index][2])
+
+    head = nn.Sequential(
+        nn.AdaptiveAvgPool2d((1, 1)),
+        nn.Flatten(start_dim=1),
+        mlp1,
+        nn.ReLU(inplace=True),
+        mlp2,
+        nn.ReLU(inplace=True),
+    )
 
     return head
 
