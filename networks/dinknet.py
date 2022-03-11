@@ -338,21 +338,11 @@ class DLinkNet18HeadsV2(nn.Module):
         self.encoder2 = resnet.layer2
         self.encoder3 = resnet.layer3
         self.encoder4 = resnet.layer4
-        self.head1 = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(start_dim=1),
-            moco.resnet18_heads(large=True, index=0)
-        )
-        self.head2 = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(start_dim=1),
-            moco.resnet18_heads(large=True, index=1)
-        )
-        self.head3 = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(start_dim=1),
-            moco.resnet18_heads(large=True, index=2)
-        )
+
+        self.head1 = moco.resnet18_heads(large=True, index=0)
+        self.head2 = moco.resnet18_heads(large=True, index=1)
+        self.head3 = moco.resnet18_heads(large=True, index=2)
+
         self.merge_encoder = nn.Sequential(
             nn.Conv2d(3 * filters[1] + filters[3], filters[3], kernel_size=1, stride=1),
             nn.BatchNorm2d(filters[3]),
