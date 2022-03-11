@@ -42,7 +42,7 @@ def resnet18(large=True):
     return resnet
 
 
-def resnet18_heads(large=True, index=1):
+def resnet18_heads(large=True, index=1, decode=False):
     home_dir = os.environ['HOME']
     ckpt_dir = os.path.join(home_dir, 'checkpoints', 'seasonal-contrast')
 
@@ -73,6 +73,13 @@ def resnet18_heads(large=True, index=1):
         mlp2,
         nn.ReLU(inplace=True),
     )
+
+    if decode:
+        head = nn.Sequential(
+            *head.children(),
+            nn.Linear(in_features=mlp2.out_features, out_features=mlp2.in_features, bias=True),
+            nn.Sigmoid()
+        )
 
     return head
 
