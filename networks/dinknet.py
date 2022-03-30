@@ -313,7 +313,7 @@ class DLinkNet18HeadsV2(nn.Module):
         self.head3 = moco.resnet18_heads(large=True, index=2)
 
         self.merge_encoder = nn.Sequential(
-            nn.Conv2d(3 * filters[1] + filters[3], filters[3], kernel_size=1, stride=1),
+            nn.Conv2d(3 * filters[1] + filters[3], filters[3], kernel_size=3, stride=1),
             nn.BatchNorm2d(filters[3]),
             nn.ReLU(inplace=True)
         )
