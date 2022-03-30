@@ -583,11 +583,20 @@ class DLinkNet34LessPool(nn.Module):
 
 
 class DLinkNet34(nn.Module):
-    def __init__(self, num_classes=1, num_channels=3):
+    def __init__(self, backbone='imagenet', num_classes=1, num_channels=3):
         super(DLinkNet34, self).__init__()
 
         filters = [64, 128, 256, 512]
-        resnet = models.resnet34(pretrained=True)
+
+        if backbone == 'random':
+            resnet = models.resnet34(pretrained=False)
+        elif backbone == 'imagenet':
+            resnet = models.resnet34(pretrained=True)
+        elif backbone == 'seco-1m':
+            resnet = moco.resnet34()
+        else:
+            raise ValueError()
+
         self.first_conv = resnet.conv1
         self.first_bn = resnet.bn1
         self.first_relu = resnet.relu
