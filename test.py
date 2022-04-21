@@ -3,9 +3,10 @@ import cv2
 import glob
 import numpy as np
 import os
+import pandas as pd
 import torch
 
-from sklearn.metrics import jaccard_score
+from sklearn.metrics import f1_score, jaccard_score, precision_score, recall_score
 from networks.dinknet import DLinkNet34
 from time import time
 from torch.autograd import Variable as V
@@ -162,6 +163,8 @@ def main():
 
     total_accuracy = 0.0
 
+    data = []
+
     for i, name in enumerate(val):
         if i % 10 == 0:
             print(i / 10, '    ', '%.2f' % (time() - tic))
@@ -181,7 +184,18 @@ def main():
         mask_gt[mask_gt >= 0.5] = 1.0
         mask_gt[mask_gt <= 0.5] = 0.0
 
+        basename = name.replace('_sat.jpg', '')
+        precision = precision_score(mask_gt.flatten(), mask.flatten())
+        recall = recall_score(mask_gt.flatten(), mask.flatten())
+        f1 = f1_score(mask_gt.flatten(), mask.flatten())
+        iou = jaccard_score(mask_gt.flatten(), mask.flatten())
+
+        data.append([basename, precision, recall, f1, iou])
+
         total_accuracy += jaccard_score(mask_gt.flatten(), mask.flatten())
+
+    df = pd.DataFrame(data, columns=['Image', 'Precision', 'Recall', 'F1-score', 'IoU'])
+    df.to_pickle(os.path.join(output_dir, model, 'scores.pkl'))
 
     print(f'Total accuracy: {total_accuracy / len(val):.2f}')
 
