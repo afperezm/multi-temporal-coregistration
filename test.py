@@ -185,14 +185,14 @@ def main():
         mask_gt[mask_gt <= 0.5] = 0.0
 
         basename = name.replace('_sat.jpg', '')
-        precision = precision_score(mask_gt.flatten(), mask.flatten())
-        recall = recall_score(mask_gt.flatten(), mask.flatten())
-        f1 = f1_score(mask_gt.flatten(), mask.flatten())
-        iou = jaccard_score(mask_gt.flatten(), mask.flatten())
+        precision = precision_score(mask_gt.flatten(), mask.flatten(), zero_division=1)
+        recall = recall_score(mask_gt.flatten(), mask.flatten(), zero_division=1)
+        f1 = f1_score(mask_gt.flatten(), mask.flatten(), zero_division=1)
+        iou = jaccard_score(mask_gt.flatten(), mask.flatten(), zero_division=1)
 
         data.append([basename, precision, recall, f1, iou])
 
-        total_accuracy += jaccard_score(mask_gt.flatten(), mask.flatten())
+        total_accuracy += iou
 
     df = pd.DataFrame(data, columns=['Image', 'Precision', 'Recall', 'F1-score', 'IoU'])
     df.to_pickle(os.path.join(output_dir, model, 'scores.pkl'))
