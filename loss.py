@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from pytorch_msssim import SSIM
 
 
 class DiceBCELoss(nn.Module):
@@ -30,3 +31,14 @@ class DiceBCELoss(nn.Module):
         a = self.bce_loss(y_pred, y_true)
         b = self.soft_dice_loss(y_true, y_pred)
         return a + b
+
+
+class SSIMLoss(nn.Module):
+    def __init__(self):
+        super(SSIMLoss, self).__init__()
+        self.ssim_module = SSIM(data_range=1.0, size_average=True, win_size=3, win_sigma=1.5, channel=1)
+
+    def forward(self, labels, predictions):
+        ssim_value = self.ssim_module(predictions, labels)
+        jac_loss_value = 1 - ssim_value
+        return jac_loss_value
