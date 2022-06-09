@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from pytorch_msssim import SSIM
+from topoloss import get_topo_loss
 
 
 class DiceBCELoss(nn.Module):
@@ -53,3 +54,13 @@ class SSIMLoss(nn.Module):
         ssim_value = self.ssim_module(predictions, labels)
         jac_loss_value = 1 - ssim_value
         return jac_loss_value
+
+
+class TopoLoss(nn.Module):
+    def __init__(self, topo_size=128):
+        super(TopoLoss, self).__init__()
+        self.topo_size = topo_size
+
+    def forward(self, labels, predictions):
+        topo_score = get_topo_loss(predictions, labels, self.topo_size)
+        return topo_score
