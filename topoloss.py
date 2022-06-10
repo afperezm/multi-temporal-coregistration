@@ -160,8 +160,6 @@ def get_topo_loss(likelihood_tensor, gt_tensor, topo_size=100):
     for y in range(0, likelihood.shape[0], topo_size):
         for x in range(0, likelihood.shape[1], topo_size):
 
-            print(x, y)
-
             lh_patch = likelihood[y:min(y + topo_size, likelihood.shape[0]), x:min(x + topo_size, likelihood.shape[1])]
             gt_patch = gt[y:min(y + topo_size, gt.shape[0]), x:min(x + topo_size, gt.shape[1])]
 
@@ -204,8 +202,8 @@ def get_topo_loss(likelihood_tensor, gt_tensor, topo_size=100):
                         else:
                             topo_cp_ref_map[y + int(dcp_lh[hole_index][0]), x + int(dcp_lh[hole_index][1])] = 0
 
-    topo_cp_weight_map = torch.tensor(topo_cp_weight_map, dtype=torch.float)
-    topo_cp_ref_map = torch.tensor(topo_cp_ref_map, dtype=torch.float)
+    topo_cp_weight_map = torch.tensor(topo_cp_weight_map, dtype=torch.float).to(likelihood_tensor.device)
+    topo_cp_ref_map = torch.tensor(topo_cp_ref_map, dtype=torch.float).to(likelihood_tensor.device)
 
     # Measuring the MSE loss between predicted critical points and reference critical points
     loss_topo = (((likelihood_tensor * topo_cp_weight_map) - topo_cp_ref_map) ** 2).sum()
