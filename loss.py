@@ -71,4 +71,4 @@ class ComboTopoLoss(nn.Module):
                                        zip(torch.unbind(predictions, dim=0), torch.unbind(labels, dim=0))],
                                       dim=0).mean()
 
-        return bce_loss_value, topo_loss_value
+        return bce_loss_value + topo_loss_value
