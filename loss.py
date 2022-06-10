@@ -57,10 +57,12 @@ class SSIMLoss(nn.Module):
 
 
 class TopoLoss(nn.Module):
-    def __init__(self, topo_size=128):
+    def __init__(self, topo_size=64):
         super(TopoLoss, self).__init__()
         self.topo_size = topo_size
 
     def forward(self, labels, predictions):
+        labels = labels - 1
+        predictions = predictions - 1
         topo_score = get_topo_loss(predictions, labels, self.topo_size)
         return topo_score

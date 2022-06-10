@@ -148,7 +148,7 @@ def get_topo_loss(likelihood_tensor, gt_tensor, topo_size=100):
 
     """
 
-    likelihood = torch.sigmoid(likelihood_tensor).clone()
+    likelihood = likelihood_tensor.clone()
     gt = gt_tensor.clone()
 
     likelihood = torch.squeeze(likelihood).cpu().detach().numpy()
