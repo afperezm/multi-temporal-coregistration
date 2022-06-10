@@ -56,13 +56,17 @@ class SSIMLoss(nn.Module):
         return jac_loss_value
 
 
-class TopoLoss(nn.Module):
-    def __init__(self, topo_size=64):
-        super(TopoLoss, self).__init__()
+class ComboTopoLoss(nn.Module):
+    def __init__(self, topo_size=128):
+        super(ComboTopoLoss, self).__init__()
         self.topo_size = topo_size
 
     def forward(self, labels, predictions):
-        labels = labels - 1
-        predictions = predictions - 1
-        topo_score = get_topo_loss(predictions, labels, self.topo_size)
-        return topo_score
+
+        bce_loss_value = torch.nn.functional.binary_cross_entropy_with_logits(predictions, labels)
+
+        labels = 1 - labels
+        predictions = 1 - predictions
+        topo_loss_value = get_topo_loss(predictions, labels, self.topo_size)
+
+        return bce_loss_value, topo_loss_value
