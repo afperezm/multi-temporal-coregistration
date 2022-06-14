@@ -120,7 +120,7 @@ def get_critical_points(likelihood):
     pairs_lh = lh_cubic.cofaces_of_persistence_pairs()
 
     # If the paris is 0, return False to skip
-    if len(pairs_lh[0]) == 0:
+    if len(pairs_lh[0]) == 0 or len(pairs_lh[0][0]) == 0:
         return 0, 0, 0, False
 
     # return persistence diagram, birth/death critical points
