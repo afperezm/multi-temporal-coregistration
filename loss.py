@@ -57,9 +57,10 @@ class SSIMLoss(nn.Module):
 
 
 class ComboTopoLoss(nn.Module):
-    def __init__(self, topo_size=128):
+    def __init__(self, topo_size=128, topo_weight=1.0):
         super(ComboTopoLoss, self).__init__()
         self.topo_size = topo_size
+        self.topo_weight = topo_weight
 
     def forward(self, labels, predictions):
 
@@ -71,4 +72,4 @@ class ComboTopoLoss(nn.Module):
                                        zip(torch.unbind(predictions, dim=0), torch.unbind(labels, dim=0))],
                                       dim=0).mean()
 
-        return bce_loss_value + topo_loss_value
+        return bce_loss_value + self.topo_weight * topo_loss_value
