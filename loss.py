@@ -68,8 +68,8 @@ class ComboTopoLoss(nn.Module):
 
         labels = 1 - labels
         predictions = 1 - predictions
-        topo_loss_value = torch.stack([get_topo_loss(prediction, label, self.topo_size) for prediction, label in
-                                       zip(torch.unbind(predictions, dim=0), torch.unbind(labels, dim=0))],
-                                      dim=0).mean()
+        topo_loss_value = torch.stack(
+            [get_topo_loss(prediction.squeeze(), label.squeeze(), self.topo_size) for prediction, label in
+             zip(torch.unbind(predictions, dim=0), torch.unbind(labels, dim=0))], dim=0).mean()
 
         return bce_loss_value + self.topo_weight * topo_loss_value
