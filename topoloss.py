@@ -32,9 +32,9 @@ def compute_dgm_force(lh_dgm, gt_dgm, pers_thresh=0.03, pers_thresh_perfect=0.99
         gt_n_holes = gt_pers.size(dim=0)  # number of holes in gt
 
     if gt_pers is None or gt_n_holes == 0:
-        idx_holes_to_fix = torch.tensor([])
+        idx_holes_to_fix = torch.tensor([]).to(lh_dgm.device)
         idx_holes_to_remove = torch.range(0, lh_pers.size(dim=0) - 1, dtype=torch.int)
-        idx_holes_perfect = torch.tensor([])
+        idx_holes_perfect = torch.tensor([]).to(lh_dgm.device)
     else:
         # check to ensure that all gt dots have persistence 1
         # tmp = torch.gt(gt_pers, pers_thresh_perfect)
@@ -49,7 +49,7 @@ def compute_dgm_force(lh_dgm, gt_dgm, pers_thresh=0.03, pers_thresh_perfect=0.99
         if torch.sum(tmp) >= 1:
             idx_holes_perfect = lh_pers_sorted_indices[:torch.sum(tmp)]
         else:
-            idx_holes_perfect = torch.tensor([])
+            idx_holes_perfect = torch.tensor([]).to(lh_dgm.device)
 
         # find top gt_n_holes indices
         idx_holes_to_fix_or_perfect = lh_pers_sorted_indices[:gt_n_holes]
@@ -106,7 +106,7 @@ def get_critical_points(likelihood):
 
     # Return empty tensors and false to skip if there are no pairings for dimension 0
     if len(cc[0].pairing) == 0:
-        return torch.tensor([[]]), torch.tensor([[]]), torch.tensor([[]]), False
+        return torch.tensor([[]]).to(likelihood.device), torch.tensor([[]]).to(likelihood.device), torch.tensor([[]]).to(likelihood.device), False
 
     # Compute persistence diagram
     pd_lh = lh.view(-1)[torch.mm(cc[0].pairing.view(-1, 2), torch.tensor([[lh.shape[0]], [1]])).view(-1, 2)]
