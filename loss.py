@@ -73,3 +73,29 @@ class ComboTopoLoss(nn.Module):
              zip(torch.unbind(predictions, dim=0), torch.unbind(labels, dim=0))], dim=0).mean()
 
         return bce_loss_value + self.topo_weight * topo_loss_value
+
+
+if __name__ == "__main__":
+
+    import cv2
+    import numpy as np
+    import torch
+
+    # from loss import ComboTopoLoss
+
+    data_dir = '/Users/perezmaf/data/northern-cities/test_gillam_nonempty/'
+    name = 'gillam_mb_canada_2020-07-29-17-38-19_eopatch-0019-0019_sat.jpg'
+
+    mask = cv2.imread(data_dir + name.replace('_sat.jpg', '_mask.png'), cv2.IMREAD_GRAYSCALE)
+    mask = np.array(mask, np.float32) / 255.0
+    mask[mask >= 0.5] = 1.0
+    mask[mask <= 0.5] = 0.0
+    mask = np.expand_dims(np.expand_dims(mask, axis=0), axis=0)
+
+    pred_name = 'gillam_mb_canada_2020-07-29-17-38-19_eopatch-0019-0019_sat.jpg.npy'
+    pred = np.load(pred_name)
+    pred = np.expand_dims(np.expand_dims(pred, axis=0), axis=0)
+
+    loss = ComboTopoLoss(64)
+    bce_topo_loss = loss(torch.tensor(mask), torch.tensor(pred))
+    print(bce_topo_loss)
