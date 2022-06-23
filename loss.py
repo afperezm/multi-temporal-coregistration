@@ -1,6 +1,6 @@
-import torch
 import torch.nn as nn
 from pytorch_msssim import SSIM
+from soft_skeleton import soft_skel
 from topoloss import get_topo_loss
 
 
@@ -73,6 +73,69 @@ class ComboTopoLoss(nn.Module):
              zip(torch.unbind(predictions, dim=0), torch.unbind(labels, dim=0))], dim=0).mean()
 
         return bce_loss_value + self.topo_weight * topo_loss_value
+
+
+class SoftClDice(nn.Module):
+    def __init__(self, iter_=3, smooth=1.):
+        super(SoftClDice, self).__init__()
+        self.iter = iter_
+        self.smooth = smooth
+
+    def forward(self, y_true, y_pred):
+        iters_ = self.iter
+        smooth = self.smooth
+
+        skel_pred = soft_skel(y_pred, iters_)
+        skel_true = soft_skel(y_true, iters_)
+        tprec = (torch.sum(torch.multiply(skel_pred, y_true)[:, 0:, ...]) + smooth) / (
+                torch.sum(skel_pred[:, 0:, ...]) + smooth)
+        tsens = (torch.sum(torch.multiply(skel_true, y_pred)[:, 0:, ...]) + smooth) / (
+                torch.sum(skel_true[:, 0:, ...]) + smooth)
+
+        cl_dice = 1. - 2.0 * (tprec * tsens) / (tprec + tsens)
+
+        return cl_dice
+
+
+class SoftDiceClDice(nn.Module):
+    def __init__(self, iter_=3, alpha=0.5, smooth=1.):
+        super(SoftDiceClDice, self).__init__()
+        self.iter = iter_
+        self.smooth = smooth
+        self.alpha = alpha
+
+    def soft_dice(self, y_true, y_pred, smooth=1):
+        """[function to compute dice loss]
+
+        Args:
+            y_true ([float32]): [ground truth image]
+            y_pred ([float32]): [predicted image]
+
+        Returns:
+            [float32]: [loss value]
+        """
+
+        intersection = torch.sum((y_true * y_pred)[:, 0:, ...])
+        coefficient = (2. * intersection + smooth) / (
+                torch.sum(y_true[:, 0:, ...]) + torch.sum(y_pred[:, 0:, ...]) + smooth)
+
+        return 1. - coefficient
+
+    def forward(self, y_true, y_pred):
+
+        dice = self.soft_dice(y_true, y_pred)
+        skel_pred = soft_skel(y_pred, self.iter)
+        skel_true = soft_skel(y_true, self.iter)
+        tprec = (torch.sum(torch.multiply(skel_pred, y_true)[:, 0:, ...]) + self.smooth) / (
+                torch.sum(skel_pred[:, 0:, ...]) + self.smooth)
+        tsens = (torch.sum(torch.multiply(skel_true, y_pred)[:, 0:, ...]) + self.smooth) / (
+                torch.sum(skel_true[:, 0:, ...]) + self.smooth)
+        cl_dice = 1. - 2.0 * (tprec * tsens) / (tprec + tsens)
+
+        loss = (1.0 - self.alpha) * dice + self.alpha * cl_dice
+        loss.requires_grad = True
+
+        return loss
 
 
 if __name__ == "__main__":
