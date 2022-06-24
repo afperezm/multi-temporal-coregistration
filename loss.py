@@ -5,14 +5,14 @@ from topoloss import get_topo_loss
 
 
 class DiceBCELoss(nn.Module):
-    def __init__(self, top_k=0.7):
+    def __init__(self, batch=True):
         super(DiceBCELoss, self).__init__()
-        self.top_k = top_k
-        self.bce_loss = nn.BCELoss(reduction='mean') if top_k == 1 else nn.BCELoss(reduction='none')
+        self.batch = batch
+        self.bce_loss = nn.BCELoss()
 
     def soft_dice_coefficient(self, y_true, y_pred):
         smooth = 0.0  # may change
-        if self.top_k == 1:
+        if self.batch:
             i = torch.sum(y_true)
             j = torch.sum(y_pred)
             intersection = torch.sum(y_true * y_pred)
@@ -22,27 +22,16 @@ class DiceBCELoss(nn.Module):
             intersection = (y_true * y_pred).sum(1).sum(1).sum(1)
         score = (2. * intersection + smooth) / (i + j + smooth)
         # score = (intersection + smooth) / (i + j - intersection + smooth)#iou
-        if self.top_k == 1:
-            return torch.mean(score)
-        else:
-            return score
+        return score.mean()
 
     def soft_dice_loss(self, y_true, y_pred):
         loss = 1 - self.soft_dice_coefficient(y_true, y_pred)
         return loss
 
     def __call__(self, y_true, y_pred):
-        if self.top_k == 1:
-            bce_scores = self.bce_loss(y_pred, y_true).mean()
-        else:
-            bce_scores = self.bce_loss(y_pred, y_true).mean(axis=(1, 2, 3))
-        dice_scores = self.soft_dice_loss(y_true, y_pred)
-        scores = bce_scores + dice_scores
-        if self.top_k == 1:
-            return scores
-        else:
-            top_scores, top_indices = torch.topk(scores, int(self.top_k * scores.size()[0]))
-            return torch.mean(top_scores)
+        a = self.bce_loss(y_pred, y_true)
+        b = self.soft_dice_loss(y_true, y_pred)
+        return a + b
 
 
 class SSIMLoss(nn.Module):
