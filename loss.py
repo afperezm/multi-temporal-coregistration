@@ -1,5 +1,8 @@
+import malis as m
 import torch.nn as nn
+
 from pytorch_msssim import SSIM
+from skimage import measure
 from soft_skeleton import soft_skel
 from topoloss import get_topo_loss
 
@@ -127,8 +130,112 @@ class SoftDiceClDice(nn.Module):
         return loss
 
 
-if __name__ == "__main__":
+class ConnectivityLoss(nn.Module):
 
+    def __init__(self, ignore_index=255):
+        super().__init__()
+        self.ignore_index = ignore_index
+
+    def forward(self, y_true, y_pred, malis_lr, malis_lr_pos):
+
+        pred_np_full = y_pred.cpu().detach().numpy()
+        target_np_full = y_true.cpu().detach().numpy()
+
+        B, C, H, W = pred_np_full.shape
+
+        weights_n = np.zeros(pred_np_full.shape)
+        weights_p = np.zeros(pred_np_full.shape)
+
+        window = 32
+
+        for row_idx in range(H // window):
+            for col_idx in range(W // window):
+                pred_np = pred_np_full[:, :, row_idx * window:(row_idx + 1) * window, col_idx * window:(col_idx + 1) * window]
+                target_np = target_np_full[:, :, row_idx * window:(row_idx + 1) * window, col_idx * window:(col_idx + 1) * window]
+
+                nodes_indexes = np.arange(window * window).reshape(window, window)
+                nodes_indexes_h = np.vstack([nodes_indexes[:, :-1].ravel(), nodes_indexes[:, 1:].ravel()]).tolist()
+                nodes_indexes_v = np.vstack([nodes_indexes[:-1, :].ravel(), nodes_indexes[1:, :].ravel()]).tolist()
+                nodes_indexes = np.hstack([nodes_indexes_h, nodes_indexes_v])
+                nodes_indexes = np.uint64(nodes_indexes)
+
+                costs_h = (pred_np[:, :, :, :-1] + pred_np[:, :, :, 1:]).reshape(B, -1)
+                costs_v = (pred_np[:, :, :-1, :] + pred_np[:, :, 1:, :]).reshape(B, -1)
+                costs = np.hstack([costs_h, costs_v])
+                costs = np.float32(costs)
+
+                gt_costs_h = (target_np[:, :, :, :-1] + target_np[:, :, :, 1:]).reshape(B, -1)
+                gt_costs_v = (target_np[:, :, :-1, :] + target_np[:, :, 1:, :]).reshape(B, -1)
+                gt_costs = np.hstack([gt_costs_h, gt_costs_v])
+                gt_costs = np.float32(gt_costs)
+
+                costs_n = costs.copy()
+                costs_p = costs.copy()
+
+                costs_n[gt_costs > 20] = 20
+                costs_p[gt_costs < 10] = 0
+                gt_costs[gt_costs > 20] = 20
+
+                for i in range(len(pred_np)):
+                    sg_gt = measure.label(target_np[i, 0] == 0)
+
+                    edge_weights_n = m.malis_loss_weights(sg_gt.astype(np.uint64).flatten(), nodes_indexes[0], \
+                                                          nodes_indexes[1], costs_n[i], 0)
+
+                    edge_weights_p = m.malis_loss_weights(sg_gt.astype(np.uint64).flatten(), nodes_indexes[0], \
+                                                          nodes_indexes[1], costs_p[i], 1)
+
+                    num_pairs_n = np.sum(edge_weights_n)
+                    if num_pairs_n > 0:
+                        edge_weights_n = edge_weights_n / num_pairs_n
+
+                    num_pairs_p = np.sum(edge_weights_p)
+                    if num_pairs_p > 0:
+                        edge_weights_p = edge_weights_p / num_pairs_p
+
+                    # Depending on your clip values
+                    edge_weights_n[gt_costs[i] >= 10] = 0
+                    edge_weights_p[gt_costs[i] < 20] = 0
+
+                    malis_w = edge_weights_n.copy()
+
+                    malis_w_h, malis_w_v = np.split(malis_w, 2)
+                    malis_w_h, malis_w_v = malis_w_h.reshape(window, window - 1), malis_w_v.reshape(window - 1, window)
+
+                    nodes_weights = np.zeros((window, window), np.float32)
+                    nodes_weights[:, :-1] += malis_w_h
+                    nodes_weights[:, 1:] += malis_w_h
+                    nodes_weights[:-1, :] += malis_w_v
+                    nodes_weights[1:, :] += malis_w_v
+
+                    weights_n[i, 0, row_idx * window:(row_idx + 1) * window, col_idx * window:(col_idx + 1) * window] = nodes_weights
+
+                    malis_w = edge_weights_p.copy()
+
+                    malis_w_h, malis_w_v = np.split(malis_w, 2)
+                    malis_w_h, malis_w_v = malis_w_h.reshape(window, window - 1), malis_w_v.reshape(window - 1, window)
+
+                    nodes_weights = np.zeros((window, window), np.float32)
+                    nodes_weights[:, :-1] += malis_w_h
+                    nodes_weights[:, 1:] += malis_w_h
+                    nodes_weights[:-1, :] += malis_w_v
+                    nodes_weights[1:, :] += malis_w_v
+
+                    weights_p[i, 0, row_idx * window:(row_idx + 1) * window, col_idx * window:(col_idx + 1) * window] = nodes_weights
+
+        loss_n = y_pred.pow(2)
+        loss_p = (20 - y_pred).pow(2)
+
+        if torch.cuda.is_available():
+            loss_value = malis_lr * loss_n * torch.Tensor(weights_n).cuda() + malis_lr_pos * loss_p * torch.Tensor(
+                weights_p).cuda()
+        else:
+            loss_value = malis_lr * loss_n * torch.Tensor(weights_n) + malis_lr_pos * loss_p * torch.Tensor(weights_p)
+
+        return loss_value.sum()
+
+
+if __name__ == "__main__":
     import cv2
     import numpy as np
     import torch
