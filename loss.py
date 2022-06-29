@@ -136,7 +136,7 @@ class ConnectivityLoss(nn.Module):
         super().__init__()
         self.ignore_index = ignore_index
 
-    def forward(self, y_true, y_pred, malis_lr, malis_lr_pos):
+    def forward(self, y_true, y_pred, malis_lr=1.0, malis_lr_pos=1.0):
 
         pred_np_full = y_pred.cpu().detach().numpy()
         target_np_full = y_true.cpu().detach().numpy()
