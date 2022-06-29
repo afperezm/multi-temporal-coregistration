@@ -48,9 +48,9 @@ class SSIMLoss(nn.Module):
         return jac_loss_value
 
 
-class ComboTopoLoss(nn.Module):
+class PersistenceLoss(nn.Module):
     def __init__(self, topo_size=128, topo_weight=1.0):
-        super(ComboTopoLoss, self).__init__()
+        super(PersistenceLoss, self).__init__()
         self.topo_size = topo_size
         self.topo_weight = topo_weight
 
@@ -60,6 +60,7 @@ class ComboTopoLoss(nn.Module):
 
         labels = 1 - labels
         predictions = 1 - predictions
+
         topo_loss_value = torch.stack(
             [get_topo_loss(prediction.squeeze(), label.squeeze(), self.topo_size) for prediction, label in
              zip(torch.unbind(predictions, dim=0), torch.unbind(labels, dim=0))], dim=0).mean()
@@ -67,9 +68,9 @@ class ComboTopoLoss(nn.Module):
         return bce_loss_value + self.topo_weight * topo_loss_value
 
 
-class SoftClDice(nn.Module):
+class SoftCenterlineDiceLoss(nn.Module):
     def __init__(self, iter_=3, smooth=1.):
-        super(SoftClDice, self).__init__()
+        super(SoftCenterlineDiceLoss, self).__init__()
         self.iter = iter_
         self.smooth = smooth
 
@@ -89,9 +90,9 @@ class SoftClDice(nn.Module):
         return cl_dice
 
 
-class SoftDiceClDice(nn.Module):
+class SoftDiceCenterlineDiceLoss(nn.Module):
     def __init__(self, iter_=3, alpha=0.5, smooth=1.):
-        super(SoftDiceClDice, self).__init__()
+        super(SoftDiceCenterlineDiceLoss, self).__init__()
         self.iter = iter_
         self.smooth = smooth
         self.alpha = alpha
@@ -242,7 +243,7 @@ if __name__ == "__main__":
 
     # from loss import ComboTopoLoss
 
-    data_dir = '/Users/perezmaf/data/northern-cities/test_gillam_nonempty/'
+    data_dir = '/home/andresf/data/northern-cities/test/'
     name = 'gillam_mb_canada_2020-07-29-17-38-19_eopatch-0019-0019_sat.jpg'
 
     mask = cv2.imread(data_dir + name.replace('_sat.jpg', '_mask.png'), cv2.IMREAD_GRAYSCALE)
@@ -255,6 +256,6 @@ if __name__ == "__main__":
     pred = np.load(pred_name)
     pred = np.expand_dims(np.expand_dims(pred, axis=0), axis=0)
 
-    loss = ComboTopoLoss(64)
-    bce_topo_loss = loss(torch.tensor(mask), torch.tensor(pred))
-    print(bce_topo_loss)
+    loss = ConnectivityLoss()
+    topo_loss = loss(torch.tensor(mask), torch.tensor(pred), 1.0, 1.0)
+    print(topo_loss)
