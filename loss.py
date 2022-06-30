@@ -154,6 +154,11 @@ class ConnectivityLoss(nn.Module):
                 pred_np = pred_np_full[:, :, row_idx * window:(row_idx + 1) * window, col_idx * window:(col_idx + 1) * window]
                 target_np = target_np_full[:, :, row_idx * window:(row_idx + 1) * window, col_idx * window:(col_idx + 1) * window]
 
+                if torch.min(pred_np) == 1 or torch.max(pred_np) == 0:
+                    continue
+                if torch.min(target_np) == 1 or torch.max(target_np) == 0:
+                    continue
+
                 nodes_indexes = torch.arange(window * window).reshape(window, window)
                 nodes_indexes_h = torch.vstack([nodes_indexes[:, :-1].flatten(), nodes_indexes[:, 1:].flatten()])
                 nodes_indexes_v = torch.vstack([nodes_indexes[:-1, :].flatten(), nodes_indexes[1:, :].flatten()])
