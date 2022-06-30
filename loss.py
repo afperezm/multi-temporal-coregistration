@@ -180,7 +180,7 @@ class ConnectivityLoss(nn.Module):
                 gt_costs[gt_costs > 20] = 20
 
                 for i in range(len(pred_np)):
-                    sg_gt = measure.label(target_np[i, 0] == 0)
+                    sg_gt = measure.label(target_np[i, 0].cpu().detach().numpy() == 0)
 
                     edge_weights_n = m.malis_loss_weights(sg_gt.astype(np.uint64).flatten(), nodes_indexes[0].cpu().detach().numpy().astype(np.uint64),
                                                           nodes_indexes[1].cpu().detach().numpy().astype(np.uint64), costs_n[i].cpu().detach().numpy().astype(np.float32), 0)
