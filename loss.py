@@ -90,14 +90,14 @@ class SoftCenterlineDiceLoss(nn.Module):
         return cl_dice
 
 
-class SoftDiceCenterlineDiceLoss(nn.Module):
-    def __init__(self, iter_=3, alpha=0.5, smooth=1.):
-        super(SoftDiceCenterlineDiceLoss, self).__init__()
+class SoftDiceClDiceLoss(nn.Module):
+    def __init__(self, iter_=3, alpha=0.5, smooth=1e-7):
+        super(SoftDiceClDiceLoss, self).__init__()
         self.iter = iter_
         self.smooth = smooth
         self.alpha = alpha
 
-    def soft_dice(self, y_true, y_pred, smooth=1):
+    def soft_dice(self, y_true, y_pred):
         """[function to compute dice loss]
 
         Args:
@@ -109,8 +109,8 @@ class SoftDiceCenterlineDiceLoss(nn.Module):
         """
 
         intersection = torch.sum((y_true * y_pred)[:, 0:, ...])
-        coefficient = (2. * intersection + smooth) / (
-                torch.sum(y_true[:, 0:, ...]) + torch.sum(y_pred[:, 0:, ...]) + smooth)
+        coefficient = (2. * intersection + self.smooth) / (
+                torch.sum(y_true[:, 0:, ...]) + torch.sum(y_pred[:, 0:, ...]) + self.smooth)
 
         return 1. - coefficient
 
