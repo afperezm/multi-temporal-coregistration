@@ -125,10 +125,9 @@ class SoftDiceCenterlineDiceLoss(nn.Module):
                 torch.sum(skel_true[:, 0:, ...]) + self.smooth)
         cl_dice = 1. - 2.0 * (tprec * tsens) / (tprec + tsens)
 
-        loss = (1.0 - self.alpha) * dice + self.alpha * cl_dice
-        loss.requires_grad = True
+        loss_value = (1.0 - self.alpha) * dice + self.alpha * cl_dice
 
-        return loss
+        return loss_value
 
 
 class ConnectivityLoss(nn.Module):
