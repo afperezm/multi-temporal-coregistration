@@ -91,9 +91,9 @@ class SoftCenterlineDiceLoss(nn.Module):
 
 
 class SoftDiceClDiceLoss(nn.Module):
-    def __init__(self, iter_=3, alpha=0.5, smooth=1e-7):
+    def __init__(self, iterations=3, alpha=0.5, smooth=1e-7):
         super(SoftDiceClDiceLoss, self).__init__()
-        self.iter = iter_
+        self.iterations = iterations
         self.smooth = smooth
         self.alpha = alpha
 
@@ -117,8 +117,8 @@ class SoftDiceClDiceLoss(nn.Module):
     def forward(self, y_true, y_pred):
 
         dice = self.soft_dice(y_true, y_pred)
-        skel_pred = soft_skel(y_pred, self.iter)
-        skel_true = soft_skel(y_true, self.iter)
+        skel_pred = soft_skel(y_pred, self.iterations)
+        skel_true = soft_skel(y_true, self.iterations)
         tprec = (torch.sum(torch.multiply(skel_pred, y_true)[:, 0:, ...]) + self.smooth) / (
                 torch.sum(skel_pred[:, 0:, ...]) + self.smooth)
         tsens = (torch.sum(torch.multiply(skel_true, y_pred)[:, 0:, ...]) + self.smooth) / (
