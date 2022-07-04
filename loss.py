@@ -258,5 +258,5 @@ if __name__ == "__main__":
     pred = np.expand_dims(np.expand_dims(pred, axis=0), axis=0)
 
     loss = ConnectivityLoss()
-    topo_loss = loss(torch.tensor(mask), torch.tensor(pred), 1.0, 1.0)
+    topo_loss = loss(torch.tensor(mask), torch.tensor(pred))
     print(topo_loss)
