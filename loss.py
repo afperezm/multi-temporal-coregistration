@@ -49,21 +49,24 @@ class SSIMLoss(nn.Module):
 
 
 class PersistenceLoss(nn.Module):
-    def __init__(self, topo_size=128, topo_weight=1.0):
+    def __init__(self, topo_size=64, topo_weight=0.005):
         super(PersistenceLoss, self).__init__()
         self.topo_size = topo_size
         self.topo_weight = topo_weight
+        self.bce_loss = nn.BCELoss()
 
-    def forward(self, labels, predictions):
+    def topo_loss(self, y_true, y_pred):
 
-        bce_loss_value = torch.nn.functional.binary_cross_entropy_with_logits(predictions, labels)
+        topo_scores = [get_topo_loss(prediction.squeeze(), label.squeeze(), self.topo_size) for prediction, label in
+                       zip(torch.unbind(y_pred, dim=0), torch.unbind(y_true, dim=0))]
+        topo_loss_value = torch.stack(topo_scores, dim=0).mean()
 
-        labels = 1 - labels
-        predictions = 1 - predictions
+        return topo_loss_value
 
-        topo_loss_value = torch.stack(
-            [get_topo_loss(prediction.squeeze(), label.squeeze(), self.topo_size) for prediction, label in
-             zip(torch.unbind(predictions, dim=0), torch.unbind(labels, dim=0))], dim=0).mean()
+    def forward(self, y_true, y_pred):
+
+        bce_loss_value = self.bce_loss(y_pred, y_true)
+        topo_loss_value = self.topo_loss(y_true, y_pred)
 
         return bce_loss_value + self.topo_weight * topo_loss_value
 
