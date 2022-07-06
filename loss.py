@@ -1,4 +1,5 @@
 import malis as m
+import torch
 import torch.nn as nn
 
 from pytorch_msssim import SSIM
