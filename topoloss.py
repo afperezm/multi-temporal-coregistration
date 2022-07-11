@@ -148,6 +148,8 @@ def get_topo_loss(likelihood, gt, topo_size=100):
                 continue
             if torch.min(gt_patch) == 1 or torch.max(gt_patch) == 0:
                 continue
+            if torch.sum(gt_patch) < 0.05 * gt_patch.shape[0] * gt_patch.shape[1]:
+                continue
 
             # Get the critical points of predictions and ground truth
             pd_lh, bcp_lh, dcp_lh, pairs_lh_pa = get_critical_points(lh_patch)
