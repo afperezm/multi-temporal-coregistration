@@ -1,3 +1,4 @@
+import random
 import torch
 import torch_topological.nn as tt
 
@@ -118,7 +119,7 @@ def get_critical_points(likelihood):
     return pd_lh, bcp_lh, dcp_lh, True
 
 
-def get_topo_loss(likelihood, gt, topo_size=100):
+def get_topo_loss(likelihood, gt, topo_size=128):
     """
     Calculate the topology loss of the predicted image and ground truth image
     Warning: To make sure the topology loss is able to back-propagation, likelihood
@@ -138,8 +139,15 @@ def get_topo_loss(likelihood, gt, topo_size=100):
     topo_cp_weight_map = torch.zeros_like(likelihood, dtype=torch.float)
     topo_cp_ref_map = torch.zeros_like(likelihood, dtype=torch.float)
 
-    for y in range(0, likelihood.shape[0], topo_size):
-        for x in range(0, likelihood.shape[1], topo_size):
+    # y_indices = range(0, likelihood.shape[0], topo_size)
+    y_indices = random.choices([y for y in range(0, likelihood.shape[0] - topo_size + 1)],
+                               k=likelihood.shape[0] // topo_size // 4)
+    # x_indices = range(0, likelihood.shape[1], topo_size)
+    x_indices = random.choices([x for x in range(0, likelihood.shape[1] - topo_size + 1)],
+                               k=likelihood.shape[1] // topo_size // 4)
+
+    for y in y_indices:
+        for x in x_indices:
 
             lh_patch = likelihood[y:min(y + topo_size, likelihood.shape[0]), x:min(x + topo_size, likelihood.shape[1])]
             gt_patch = gt[y:min(y + topo_size, gt.shape[0]), x:min(x + topo_size, gt.shape[1])]
