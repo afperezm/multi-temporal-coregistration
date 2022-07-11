@@ -1,4 +1,8 @@
+import cv2
 import malis as m
+import random
+import numpy as np
+import time
 import torch
 import torch.nn as nn
 
@@ -242,14 +246,9 @@ class ConnectivityLoss(nn.Module):
 
 
 if __name__ == "__main__":
-    import cv2
-    import numpy as np
-    import torch
 
-    # from loss import ComboTopoLoss
-
-    data_dir = '/home/andresf/data/northern-cities/test/'
-    name = 'gillam_mb_canada_2020-07-29-17-38-19_eopatch-0019-0019_sat.jpg'
+    data_dir = '/home/andresf/data/deepglobe-roads/train/'
+    name = '768086_sat.jpg'
 
     mask = cv2.imread(data_dir + name.replace('_sat.jpg', '_mask.png'), cv2.IMREAD_GRAYSCALE)
     mask = np.array(mask, np.float32) / 255.0
@@ -257,10 +256,17 @@ if __name__ == "__main__":
     mask[mask <= 0.5] = 0.0
     mask = np.expand_dims(np.expand_dims(mask, axis=0), axis=0)
 
-    pred_name = 'gillam_mb_canada_2020-07-29-17-38-19_eopatch-0019-0019_sat.jpg.npy'
+    pred_name = '/home/andresf/Downloads/768086_mask.npy'
     pred = np.load(pred_name)
+    pred = np.array(pred, np.float32) / 8.0
     pred = np.expand_dims(np.expand_dims(pred, axis=0), axis=0)
 
-    loss = ConnectivityLoss()
+    loss = PersistenceLoss()
+
+    random.seed(42)
+
+    t0 = time.time()
     topo_loss = loss(torch.tensor(mask), torch.tensor(pred))
-    print(topo_loss)
+    t1 = time.time()
+
+    print(t1 - t0, topo_loss)
