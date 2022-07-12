@@ -54,11 +54,24 @@ class SSIMLoss(nn.Module):
 
 
 class PersistenceLoss(nn.Module):
-    def __init__(self, topo_size=64, topo_weight=0.005):
+    def __init__(self, topo_size=64, topo_weight=0.005, smooth=1e-7):
         super(PersistenceLoss, self).__init__()
         self.topo_size = topo_size
         self.topo_weight = topo_weight
+        self.smooth = smooth
         self.bce_loss = nn.BCELoss()
+
+    def soft_dice_loss(self, y_true, y_pred):
+
+        i = torch.sum(y_true)
+        j = torch.sum(y_pred)
+
+        intersection = torch.sum(y_true * y_pred)
+        score = (2. * intersection + self.smooth) / (i + j + self.smooth)
+
+        loss_value = 1 - score.mean()
+
+        return loss_value
 
     def topo_loss(self, y_true, y_pred):
 
@@ -71,9 +84,10 @@ class PersistenceLoss(nn.Module):
     def forward(self, y_true, y_pred):
 
         bce_loss_value = self.bce_loss(y_pred, y_true)
+        dice_loss_value = self.soft_dice_loss(y_true, y_pred)
         topo_loss_value = self.topo_loss(y_true, y_pred)
 
-        return bce_loss_value + self.topo_weight * topo_loss_value
+        return bce_loss_value + dice_loss_value + self.topo_weight * topo_loss_value
 
 
 class SoftCenterlineDiceLoss(nn.Module):
