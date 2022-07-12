@@ -113,7 +113,7 @@ class SoftCenterlineDiceLoss(nn.Module):
 
 
 class SoftDiceClDiceLoss(nn.Module):
-    def __init__(self, iterations=3, alpha=0.5, smooth=1e-7):
+    def __init__(self, iterations=20, alpha=0.5, smooth=1e-7):
         super(SoftDiceClDiceLoss, self).__init__()
         self.iterations = iterations
         self.smooth = smooth
