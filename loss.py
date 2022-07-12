@@ -245,6 +245,12 @@ class ConnectivityLoss(nn.Module):
         return loss_value.sum()
 
 
+def apply_edt(img):
+    result = cv2.distanceTransform(img.astype(np.uint8), distanceType=cv2.DIST_L2, maskSize=3, dstType=cv2.CV_8U)
+    result2 = cv2.normalize(result, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    return result2
+
+
 if __name__ == "__main__":
 
     data_dir = '/home/andresf/data/deepglobe-roads/train/'
@@ -254,19 +260,51 @@ if __name__ == "__main__":
     mask = np.array(mask, np.float32) / 255.0
     mask[mask >= 0.5] = 1.0
     mask[mask <= 0.5] = 0.0
-    mask = np.expand_dims(np.expand_dims(mask, axis=0), axis=0)
+    # mask = np.expand_dims(np.expand_dims(mask, axis=0), axis=0)
 
     pred_name = '/home/andresf/Downloads/768086_mask.npy'
     pred = np.load(pred_name)
-    pred = np.array(pred, np.float32) / 8.0
-    pred = np.expand_dims(np.expand_dims(pred, axis=0), axis=0)
+    # pred = np.array(pred, np.float32) / 8.0
+    # pred = np.expand_dims(np.expand_dims(pred, axis=0), axis=0)
+    pred[pred > 4.0] = 255
+    pred[pred <= 4.0] = 0
 
-    loss = PersistenceLoss()
+    # loss = PersistenceLoss()
+    #
+    # random.seed(42)
+    #
+    # t0 = time.time()
+    # topo_loss = loss(torch.tensor(mask), torch.tensor(pred))
+    # t1 = time.time()
+    #
+    # print(t1 - t0, topo_loss)
 
-    random.seed(42)
+    mask_edt = apply_edt(mask)
+    pred_edt = apply_edt(pred)
+
+    from matplotlib import pyplot as plt
+
+    fig, axes = plt.subplots(nrows=2, ncols=2)
+
+    axes[0][0].imshow(mask)
+    axes[0][1].imshow(pred)
+    axes[1][0].imshow(mask_edt, cmap=plt.get_cmap('gray'))
+    axes[1][1].imshow(pred_edt, cmap=plt.get_cmap('gray'))
+
+    fig.show()
+
+    mask_edt = np.expand_dims(np.expand_dims(mask_edt, axis=0), axis=0)
+    pred_edt = np.expand_dims(np.expand_dims(pred_edt, axis=0), axis=0)
+
+    mask_edt = 1 - mask_edt.astype(np.float32) / 255.0
+    pred_edt = 1 - pred_edt.astype(np.float32) / 255.0
+
+    # loss = nn.MSELoss()
+    loss = ConnectivityLoss()
 
     t0 = time.time()
-    topo_loss = loss(torch.tensor(mask), torch.tensor(pred))
+    topo_loss = loss(torch.tensor(mask_edt), torch.tensor(pred_edt))
+    # mse_loss = loss(torch.tensor(pred_edt), torch.tensor(mask_edt))
     t1 = time.time()
 
     print(t1 - t0, topo_loss)
