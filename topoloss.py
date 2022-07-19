@@ -100,6 +100,10 @@ def get_critical_points(likelihood):
 
     """
     lh = 1 - likelihood
+    pad_width = 2
+    pad_value = 0.0
+    lh = torch.nn.functional.pad(lh, tuple((pad_width, pad_width, pad_width, pad_width)),
+                                 mode='constant', value=pad_value)
 
     # Compute persistence diagram
     cc_mod = tt.CubicalComplex()
