@@ -120,6 +120,10 @@ def get_critical_points(likelihood):
     # Compute death critical points
     dcp_lh = cc[0].pairing.view(-1, 2)[[i for i in range(1, cc[0].pairing.view(-1, 2).size(dim=0), 2)]]
 
+    # Shift critical points back to the original coordinates
+    bcp_lh = bcp_lh - pad_width
+    dcp_lh = dcp_lh - pad_width
+
     return pd_lh, bcp_lh, dcp_lh, True
 
 
