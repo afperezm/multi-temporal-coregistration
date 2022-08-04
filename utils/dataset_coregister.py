@@ -132,8 +132,11 @@ def get_patch_indices(output_dir):
 
 def main():
 
-    data_dir = '/home/andresf/data/northern-cities/gillam_mb_canada_train/'
-    output_dir = '/home/andresf/workspace/DeepGlobe-Road-Extraction-Challenge/submits/dlinknet34-imagenet-gillam-all-season_train/'
+    # data_dir = '/home/andresf/data/northern-cities/gillam_mb_canada_train/'
+    # output_dir = '/home/andresf/workspace/DeepGlobe-Road-Extraction-Challenge/submits/dlinknet34-imagenet-gillam-all-season_train/'
+
+    data_dir = PARAMS.data_dir
+    output_dir = PARAMS.output_dir
 
     mean_scores_raw = []
     mean_scores_reg = []
@@ -190,5 +193,13 @@ def main():
     print(np.mean(mean_scores_reg))
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", help="Dataset directory", required=True)
+    parser.add_argument("--output_dir", help="Output directory", required=True)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    PARAMS = parse_args()
     main()
