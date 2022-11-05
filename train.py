@@ -19,7 +19,7 @@ SHAPE = (1024, 1024)
 def main():
 
     # Dump program arguments
-    with open(os.path.join("logs", PARAMS.name, "params.json"), "w") as f:
+    with open(os.path.join("logs", f"{PARAMS.name}.json"), "w") as f:
         json.dump(vars(PARAMS), f)
 
     image_list = list(filter(lambda x: x.find('sat') != -1, os.listdir(PARAMS.data_dir)))
