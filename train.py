@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 from time import time
 import torch
@@ -16,6 +17,11 @@ SHAPE = (1024, 1024)
 
 
 def main():
+
+    # Dump program arguments
+    with open(os.path.join("logs", PARAMS.name, "params.json"), "w") as f:
+        json.dump(vars(PARAMS), f)
+
     image_list = list(filter(lambda x: x.find('sat') != -1, os.listdir(PARAMS.data_dir)))
     train_list = list(map(lambda x: x[:-8], image_list))
 
