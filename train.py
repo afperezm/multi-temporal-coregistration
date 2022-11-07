@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from time import strftime
 from time import time
 import torch
 
@@ -18,8 +19,10 @@ SHAPE = (1024, 1024)
 
 def main():
 
+    exp_name = f"{PARAMS.name}-{strftime('%y%m%d')}-{strftime('%H%M%S')}"
+
     # Dump program arguments
-    with open(os.path.join("logs", f"{PARAMS.name}.json"), "w") as f:
+    with open(os.path.join("logs", f"{exp_name}.json"), "w") as f:
         json.dump(vars(PARAMS), f)
 
     image_list = list(filter(lambda x: x.find('sat') != -1, os.listdir(PARAMS.data_dir)))
@@ -43,7 +46,7 @@ def main():
                                   shuffle=True,
                                   num_workers=4)
 
-    my_log = open('logs/' + PARAMS.name + '.log', 'w')
+    my_log = open('logs/' + exp_name + '.log', 'w')
     tic = time()
     no_optimization = 0
     total_epoch = 300
@@ -75,7 +78,7 @@ def main():
         else:
             no_optimization = 0
             train_epoch_best_loss = train_epoch_loss
-            solver.save('weights/' + PARAMS.name + '.th')
+            solver.save('weights/' + exp_name + '.th')
         if no_optimization > 6:
             print('early stop at %d epoch' % epoch, file=my_log)
             # print('early stop at %d epoch' % epoch)
@@ -83,7 +86,7 @@ def main():
         if no_optimization > 3:
             if solver.old_lr < 5e-7:
                 break
-            solver.load('weights/' + PARAMS.name + '.th')
+            solver.load('weights/' + exp_name + '.th')
             solver.update_lr(5.0, factor=True, my_log=my_log)
         my_log.flush()
 
