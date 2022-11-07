@@ -163,7 +163,7 @@ def main():
 
         mask_gt = cv2.imread(os.path.join(data_dir, name), cv2.IMREAD_GRAYSCALE)
 
-        scores = [jaccard_score(mask.flatten(), mask_gt.flatten(), pos_label=255, zero_division=1) for mask in masks]
+        scores = [jaccard_score(mask_gt.flatten(), mask.flatten(), pos_label=255, zero_division=1) for mask in masks]
         mean_score = np.mean(scores)
         print(mean_score)
         mean_scores_raw.append(mean_score)
