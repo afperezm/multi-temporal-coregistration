@@ -64,11 +64,11 @@ def main():
         print('train_loss:', train_epoch_loss, file=my_log)
         print('train_accuracy:', train_epoch_accuracy, file=my_log)
         print('SHAPE:', SHAPE, file=my_log)
-        print('********')
-        print('epoch:', epoch, '    time:', int(time() - tic))
-        print('train_loss:', train_epoch_loss)
-        print('train_accuracy:', train_epoch_accuracy)
-        print('SHAPE:', SHAPE)
+        # print('********')
+        # print('epoch:', epoch, '    time:', int(time() - tic))
+        # print('train_loss:', train_epoch_loss)
+        # print('train_accuracy:', train_epoch_accuracy)
+        # print('SHAPE:', SHAPE)
 
         if train_epoch_loss >= train_epoch_best_loss:
             no_optimization += 1
@@ -78,7 +78,7 @@ def main():
             solver.save('weights/' + PARAMS.name + '.th')
         if no_optimization > 6:
             print('early stop at %d epoch' % epoch, file=my_log)
-            print('early stop at %d epoch' % epoch)
+            # print('early stop at %d epoch' % epoch)
             break
         if no_optimization > 3:
             if solver.old_lr < 5e-7:
@@ -88,7 +88,7 @@ def main():
         my_log.flush()
 
     print('Finish!', file=my_log)
-    print('Finish!')
+    # print('Finish!')
     my_log.close()
 
 
