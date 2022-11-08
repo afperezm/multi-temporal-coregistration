@@ -13,6 +13,7 @@ from metric import BinaryAccuracy
 from networks.dinknet import DLinkNet34
 # from networks.dinknet import DLinkNet34, DLinkNet50
 # from networks.unet import ResNetUNet
+from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 
 SHAPE = (1024, 1024)
@@ -25,6 +26,9 @@ def main():
     # Dump program arguments
     with open(os.path.join("logs", f"{exp_name}.json"), "w") as f:
         json.dump(vars(PARAMS), f)
+
+    # Initialize tensorboard summary writer
+    summary_writer = SummaryWriter(log_dir=os.path.join("logs", exp_name))
 
     image_list = list(filter(lambda x: x.find('sat') != -1, os.listdir(PARAMS.data_dir)))
     train_list = list(map(lambda x: x[:-8], image_list))
@@ -73,6 +77,8 @@ def main():
         # print('train_loss:', train_epoch_loss)
         # print('train_accuracy:', train_epoch_accuracy)
         # print('SHAPE:', SHAPE)
+        summary_writer.add_scalar("train_loss", train_epoch_loss, epoch)
+        summary_writer.add_scalar("train_accuracy", train_epoch_accuracy, epoch)
 
         if train_epoch_loss >= train_epoch_best_loss:
             no_optimization += 1
@@ -90,10 +96,12 @@ def main():
             solver.load('weights/' + exp_name + '.th')
             solver.update_lr(5.0, factor=True, my_log=my_log)
         my_log.flush()
+        summary_writer.flush()
 
     print('Finish!', file=my_log)
     # print('Finish!')
     my_log.close()
+    summary_writer.close()
 
 
 def parse_args():
