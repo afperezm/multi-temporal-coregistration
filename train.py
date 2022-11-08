@@ -9,6 +9,7 @@ from data import ImageFolder
 from framework import MyFrame
 from loss import DiceBCELoss
 from metric import BinaryAccuracy
+from tqdm import tqdm
 # from networks.dinknet import DLinkNet18
 from networks.dinknet import DLinkNet34
 # from networks.dinknet import DLinkNet34, DLinkNet50
@@ -56,7 +57,7 @@ def main():
     no_optimization = 0
     total_epoch = 300
     train_epoch_best_loss = 100.
-    for epoch in range(1, total_epoch + 1):
+    for epoch in tqdm(range(1, total_epoch + 1)):
         data_loader_iter = iter(train_dataloader)
         train_epoch_loss = 0
         train_epoch_accuracy = 0
