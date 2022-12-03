@@ -104,6 +104,7 @@ def main():
 
     print('Finish!', file=my_log)
     # print('Finish!')
+    my_log.flush()
     my_log.close()
     summary_writer.close()
 
