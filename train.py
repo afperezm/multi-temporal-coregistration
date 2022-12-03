@@ -24,8 +24,11 @@ def main():
 
     exp_name = f"{PARAMS.name}-{strftime('%y%m%d')}-{strftime('%H%M%S')}"
 
+    if not os.path.exists(os.path.join("weights", exp_name)):
+        os.makedirs(os.path.join("weights", exp_name))
+
     # Dump program arguments
-    with open(os.path.join("logs", f"{exp_name}.json"), "w") as f:
+    with open(os.path.join("weights", exp_name, "params.json"), "w") as f:
         json.dump(vars(PARAMS), f)
 
     # Initialize tensorboard summary writer
