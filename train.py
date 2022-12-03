@@ -40,7 +40,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # solver = MyFrame(DLinkNet18, DiceBCELoss, BinaryAccuracy, device, 2e-4)
-    solver = MyFrame(DLinkNet34, DiceBCELoss, BinaryAccuracy, device, 2e-4)
+    solver = MyFrame(DLinkNet34, DiceBCELoss, BinaryAccuracy, device, PARAMS.learning_rate)
     # solver = MyFrame(DLinkNet50, DiceBCELoss, BinaryAccuracy, device, 2e-4)
     # solver = MyFrame(ResNetUNet, DiceBCELoss, BinaryAccuracy, device, 2e-4)
 
@@ -113,6 +113,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", help="Dataset directory", required=True)
     parser.add_argument("--batch_size", help="Batch size", type=int, required=True)
+    parser.add_argument("--learning_rate", help="Learning rate", type=float, default=0.0002)
     parser.add_argument("--name", help="Model name", default="log01_dink34")
     return parser.parse_args()
 
