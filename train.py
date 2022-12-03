@@ -89,7 +89,7 @@ def main():
         else:
             no_optimization = 0
             train_epoch_best_loss = train_epoch_loss
-            solver.save('weights/' + exp_name + '.th')
+            solver.save(os.path.join("weights", exp_name, "model.th"))
         if no_optimization > 6:
             print('early stop at %d epoch' % epoch, file=my_log)
             # print('early stop at %d epoch' % epoch)
@@ -97,7 +97,7 @@ def main():
         if no_optimization > 3:
             if solver.old_lr < 5e-7:
                 break
-            solver.load('weights/' + exp_name + '.th')
+            solver.load(os.path.join("weights", exp_name, "model.th"))
             solver.update_lr(5.0, factor=True, my_log=my_log)
         my_log.flush()
         summary_writer.flush()
