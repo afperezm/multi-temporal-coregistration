@@ -180,7 +180,7 @@ def main():
         for idx, mask in enumerate(mask_paths):
             masks_warped.append(warp(warp_matrices[idx], masks[idx]))
 
-        scores = [jaccard_score(mask.flatten(), mask_gt.flatten(), pos_label=255, zero_division=1) for mask in masks_warped]
+        scores = [jaccard_score(mask_gt.flatten(), mask.flatten(), pos_label=255, zero_division=1) for mask in masks_warped]
         mean_score = np.mean(scores)
         print(mean_score)
         mean_scores_reg.append(mean_score)
