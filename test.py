@@ -158,6 +158,9 @@ def main():
 
     tic = time()
 
+    if model == 'model':
+        model = os.path.normpath(checkpoints_dir).split(os.sep)[-1]
+
     if not os.path.exists(f'{output_dir}/{model}'):
         os.makedirs(f'{output_dir}/{model}')
 
