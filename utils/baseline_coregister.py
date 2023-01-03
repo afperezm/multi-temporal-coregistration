@@ -54,31 +54,23 @@ def main():
         for idx in range(len(image_names) - 1, 0, -1):
             if os.path.exists(os.path.join(output_dir, image_names[idx - 1])):
                 continue
-            # print(f'{image_names[idx - 1]} --> {image_names[idx]}')
-            result = 'fail'
             fp = tempfile.NamedTemporaryFile(suffix='.tif')
-            # for idx_prev in range(idx, ((len(image_names) - 1) if (idx - 1 + 3) > (len(image_names) - 1) else (idx - 1 + 3)) + 1):
-            for idx_prev in range(idx, len(image_names)):
-                for match_band in [3, 2, 1, 4]:
-                    CR = COREG(os.path.join(output_dir, image_names[idx_prev]),
-                               os.path.join(data_dir, image_names[idx - 1]),
-                               path_out=fp.name, fmt_out='GTIFF',
-                               r_b4match=match_band, s_b4match=match_band, q=True, v=False)
-                    try:
-                        result = CR.calculate_spatial_shifts()
-                    except RuntimeError:
-                        print(f'Failed to register {image_names[idx - 1]} to {image_names[idx_prev]} using band [{match_band}].')
-                    if result == 'success':
-                        break
+            for match_band in [3, 2, 1, 4]:
+                CR = COREG(os.path.join(output_dir, image_names[idx]),
+                           os.path.join(data_dir, image_names[idx - 1]),
+                           path_out=fp.name, fmt_out='GTIFF',
+                           r_b4match=match_band, s_b4match=match_band, q=True, v=False)
+                try:
+                    result = CR.calculate_spatial_shifts()
+                except RuntimeError:
+                    print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} using band [{match_band}].')
+                    result = 'fail'
                 if result == 'success':
                     break
             if result == 'success':
-                print(f'{image_names[idx - 1]} --> {image_names[idx_prev]}')
                 _ = CR.correct_shifts()
                 (x_min, y_min, x_max, y_max) = CR.shift.footprint_poly.bounds
                 subprocess.check_call(['gdalwarp', '-te', str(x_min), str(y_min), str(x_max), str(y_max),
-                                       # os.path.join(output_dir, os.path.splitext(image_names[idx - 1])[0] + '_raw.tif'),
-                                       # os.path.join(output_dir, image_names[idx - 1])],
                                        fp.name,
                                        os.path.join(output_dir, image_names[idx - 1])],
                                       stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
