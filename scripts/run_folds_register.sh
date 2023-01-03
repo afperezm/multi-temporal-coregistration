@@ -17,7 +17,7 @@ for fold in 0 1 2 3 4 5; do
 
     python -u utils/dataset_images.py \
            --data_dir "${data_dir}/folds/fold-000${fold}/" \
-           --images_dir "${data_dir}/folds/" \
+           --images_dir "${data_dir}/folds/S2_10m_shifted/" \
            --phase "${phase}" \
            --threshold 0.001 \
            --num_workers 8
