@@ -1,6 +1,6 @@
 #!/bin/bash
 
-data_dir="/home/andresf/data/northern-cities/gillam_mb_canada/"
+data_dir="${HOME}/data/northern-cities/gillam_mb_canada/"
 
 python -u utils/baseline_coregister.py \
        --data_dir "${data_dir}/folds/S2_10m/" \
