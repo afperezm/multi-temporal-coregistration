@@ -4,6 +4,7 @@ import tempfile
 
 import numpy as np
 import os
+import pandas as pd
 import shutil
 import subprocess
 import warnings
@@ -31,6 +32,8 @@ def main():
         os.makedirs(output_dir)
 
     ref_date = datetime(2020, 7, 1)
+
+    data = []
 
     for eopatch_idx in get_patch_indices(data_dir):
 
@@ -74,11 +77,15 @@ def main():
                                        fp.name,
                                        os.path.join(output_dir, image_names[idx - 1])],
                                       stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info])
             else:
                 print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} falling back to raw.')
                 shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
                             os.path.join(output_dir, image_names[idx - 1]))
             fp.close()
+
+    df = pd.DataFrame(data, columns=['Image', 'COREG Info'])
+    df.to_pickle(os.path.join(output_dir, 'coreg_info.pkl'))
 
 
 def parse_args():
