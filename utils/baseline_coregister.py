@@ -80,8 +80,9 @@ def main():
                             os.path.join(output_dir, image_names[idx - 1]))
             fp.close()
 
-    df = pd.DataFrame(data, columns=['Image', 'COREG Info'])
-    df.to_pickle(os.path.join(output_dir, 'coreg_info.pkl'))
+    if not os.path.exists(os.path.join(output_dir, 'coreg_info.pkl')):
+        df = pd.DataFrame(data, columns=['Image', 'COREG Info'])
+        df.to_pickle(os.path.join(output_dir, 'coreg_info.pkl'))
 
 
 def parse_args():
