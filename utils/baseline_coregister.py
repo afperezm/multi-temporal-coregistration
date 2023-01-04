@@ -12,7 +12,6 @@ import warnings
 from arosics import COREG
 from datetime import datetime
 
-MATCH_BAND = 4
 PARAMS = None
 
 
@@ -27,6 +26,7 @@ def get_patch_indices(data_dir):
 def main():
     data_dir = PARAMS.data_dir
     output_dir = PARAMS.output_dir
+    match_band = PARAMS.match_band
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -58,18 +58,14 @@ def main():
             if os.path.exists(os.path.join(output_dir, image_names[idx - 1])):
                 continue
             fp = tempfile.NamedTemporaryFile(suffix='.tif')
-            for match_band in [3, 2, 1, 4]:
-                CR = COREG(os.path.join(output_dir, image_names[idx]),
-                           os.path.join(data_dir, image_names[idx - 1]),
-                           path_out=fp.name, fmt_out='GTIFF',
-                           r_b4match=match_band, s_b4match=match_band, q=True, v=False)
-                try:
-                    result = CR.calculate_spatial_shifts()
-                except RuntimeError:
-                    print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} using band [{match_band}].')
-                    result = 'fail'
-                if result == 'success':
-                    break
+            CR = COREG(os.path.join(output_dir, image_names[idx]),
+                       os.path.join(data_dir, image_names[idx - 1]),
+                       path_out=fp.name, fmt_out='GTIFF',
+                       r_b4match=match_band, s_b4match=match_band, q=True, v=False)
+            try:
+                result = CR.calculate_spatial_shifts()
+            except RuntimeError:
+                result = 'fail'
             if result == 'success':
                 _ = CR.correct_shifts()
                 (x_min, y_min, x_max, y_max) = CR.shift.footprint_poly.bounds
@@ -79,7 +75,7 @@ def main():
                                       stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
                 data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info])
             else:
-                print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} falling back to raw.')
+                print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} using band [{match_band}]')
                 shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
                             os.path.join(output_dir, image_names[idx - 1]))
             fp.close()
@@ -91,7 +87,8 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", help="Dataset directory (TIFF)", required=True)
-    parser.add_argument("--output_dir", help="Output directory)", required=True)
+    parser.add_argument("--output_dir", help="Output directory", required=True)
+    parser.add_argument("--match_band", help="Band used for matching reference and target images", type=int, default=3)
     return parser.parse_args()
 
 
