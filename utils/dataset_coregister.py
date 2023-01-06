@@ -10,7 +10,7 @@ import pandas as pd
 from enum import Enum
 from sklearn.metrics import jaccard_score
 
-MAX_TRANSLATION = 2
+MAX_TRANSLATION = 20
 MAX_ROTATION = np.pi / 9
 
 
