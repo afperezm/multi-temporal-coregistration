@@ -12,7 +12,7 @@ import warnings
 from arosics import COREG
 from datetime import datetime
 
-MAX_TRANSLATION = 0.5
+MAX_TRANSLATION = 5
 MAX_ROTATION = np.pi / 9
 PARAMS = None
 
