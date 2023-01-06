@@ -12,7 +12,31 @@ import warnings
 from arosics import COREG
 from datetime import datetime
 
+MAX_TRANSLATION = 0.5
+MAX_ROTATION = np.pi / 9
 PARAMS = None
+
+
+def is_registration_suspicious(warp_matrix):
+    """Static method that checks if estimated linear transformation could be implausible.
+
+    This function checks whether the norm of the estimated translation or the rotation angle exceed predefined
+    values. For the translation, a maximum translation radius of 20 pixels is flagged, while larger rotations than
+    20 degrees are flagged.
+
+    :param warp_matrix: Input linear transformation matrix
+    :type warp_matrix: ndarray
+    :return: False if registration doesn't exceed threshold, True otherwise
+    """
+
+    if warp_matrix is None:
+        return True
+
+    cos_theta = np.trace(warp_matrix[:2, :2]) / 2
+    rot_angle = np.arccos(cos_theta)
+    transl_norm = np.linalg.norm(warp_matrix[:, 2])
+
+    return True if int((rot_angle > MAX_ROTATION) or (transl_norm > MAX_TRANSLATION)) else False
 
 
 def get_patch_indices(data_dir):
@@ -67,13 +91,20 @@ def main():
             except RuntimeError:
                 result = 'fail'
             if result == 'success':
-                _ = CR.correct_shifts()
-                (x_min, y_min, x_max, y_max) = CR.shift.footprint_poly.bounds
-                subprocess.check_call(['gdalwarp', '-te', str(x_min), str(y_min), str(x_max), str(y_max),
-                                       fp.name,
-                                       os.path.join(output_dir, image_names[idx - 1])],
-                                      stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-                data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info])
+                x_shift = CR.coreg_info['corrected_shifts_px']['x']
+                y_shift = CR.coreg_info['corrected_shifts_px']['y']
+                warp_matrix = np.hstack((np.identity(2), np.array([[x_shift], [y_shift]])))
+                if is_registration_suspicious(warp_matrix):
+                    shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
+                                os.path.join(output_dir, image_names[idx - 1]))
+                else:
+                    _ = CR.correct_shifts()
+                    (x_min, y_min, x_max, y_max) = CR.shift.footprint_poly.bounds
+                    subprocess.check_call(['gdalwarp', '-te', str(x_min), str(y_min), str(x_max), str(y_max),
+                                           fp.name,
+                                           os.path.join(output_dir, image_names[idx - 1])],
+                                          stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                    data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info])
             else:
                 print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} using band [{match_band}]')
                 shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
