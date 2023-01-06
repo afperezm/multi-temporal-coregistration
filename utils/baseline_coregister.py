@@ -95,6 +95,7 @@ def main():
                 y_shift = CR.coreg_info['corrected_shifts_px']['y']
                 warp_matrix = np.hstack((np.identity(2), np.array([[x_shift], [y_shift]])))
                 if is_registration_suspicious(warp_matrix):
+                    print(f'Suspicious registration {image_names[idx - 1]} to {image_names[idx]}')
                     shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
                                 os.path.join(output_dir, image_names[idx - 1]))
                 else:
