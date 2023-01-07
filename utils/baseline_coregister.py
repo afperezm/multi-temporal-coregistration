@@ -105,7 +105,7 @@ def main():
                                            fp.name,
                                            os.path.join(output_dir, image_names[idx - 1])],
                                           stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-                    data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info])
+                    data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info, CR.ssim_orig, CR.ssim_deshifted])
             else:
                 print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} using band [{match_band}]')
                 shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
@@ -113,7 +113,7 @@ def main():
             fp.close()
 
     if not os.path.exists(os.path.join(output_dir, 'coreg_info.pkl')):
-        df = pd.DataFrame(data, columns=['Image', 'COREG Info'])
+        df = pd.DataFrame(data, columns=['Image', 'COREG Info', 'SSIM Original', 'SSIM DeShifted'])
         df.to_pickle(os.path.join(output_dir, 'coreg_info.pkl'))
 
 
