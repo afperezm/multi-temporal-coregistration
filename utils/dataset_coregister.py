@@ -151,6 +151,9 @@ def main():
         mask_paths = sorted(glob.glob(os.path.join(output_dir, f'*_eopatch-{eopatch_idx:04d}-{eopatch_idx:04d}_mask.png')))
         masks = [cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE) for mask_path in mask_paths]
 
+        image_paths = sorted(glob.glob(os.path.join(output_dir, f'*_eopatch-{eopatch_idx:04d}-{eopatch_idx:04d}_sat.jpg')))
+        images = [cv2.imread(image_path, cv2.IMREAD_COLOR) for image_path in image_paths]
+
         timestamps = [os.path.basename(mask_path).split('_')[3] for mask_path in mask_paths]
         dates = np.array([datetime.strptime(timestamp, '%Y-%m-%d-%H-%M-%S') for timestamp in timestamps])
 
@@ -179,6 +182,9 @@ def main():
         masks_warped = []
         for idx, mask in enumerate(mask_paths):
             masks_warped.append(warp(warp_matrices[idx], masks[idx]))
+
+        for idx, image_path in enumerate(image_paths):
+            _ = cv2.imwrite(os.path.join(output_dir, os.path.basename(image_path)), warp(warp_matrices[idx], images[idx]))
 
         scores = [jaccard_score(mask_gt.flatten(), mask.flatten(), pos_label=255, zero_division=1) for mask in masks_warped]
         mean_score = np.mean(scores)
