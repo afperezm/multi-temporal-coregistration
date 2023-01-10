@@ -151,7 +151,7 @@ def main():
         mask_paths = sorted(glob.glob(os.path.join(output_dir, f'*_eopatch-{eopatch_idx:04d}-{eopatch_idx:04d}_mask.png')))
         masks = [cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE) for mask_path in mask_paths]
 
-        image_paths = sorted(glob.glob(os.path.join(output_dir, f'*_eopatch-{eopatch_idx:04d}-{eopatch_idx:04d}_sat.jpg')))
+        image_paths = sorted(glob.glob(os.path.join(data_dir, f'*_eopatch-{eopatch_idx:04d}-{eopatch_idx:04d}_sat.jpg')))
         images = [cv2.imread(image_path, cv2.IMREAD_COLOR) for image_path in image_paths]
 
         timestamps = [os.path.basename(mask_path).split('_')[3] for mask_path in mask_paths]
