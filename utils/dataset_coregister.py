@@ -176,7 +176,7 @@ def main():
         warp_matrices = []
         for idx, mask in enumerate(mask_paths):
             warp_matrix = register(mask_ref, masks[idx])
-            data.append([os.path.splitext(os.path.basename(mask_paths[0]))[0], warp_matrix])
+            data.append([os.path.splitext(os.path.basename(mask_paths[idx]))[0], warp_matrix])
             warp_matrices.append(warp_matrix)
 
         masks_warped = []
