@@ -77,9 +77,15 @@ def main():
         if not os.path.exists(os.path.join(output_dir, image_names[-1])):
             shutil.copy(os.path.join(data_dir, image_names[-1]), os.path.join(output_dir, image_names[-1]))
 
+        result = None
+
         # Co-register with latest co-registered image (the reference base is assumed to be co-registered)
         for idx in range(len(image_names) - 1, 0, -1):
             if os.path.exists(os.path.join(output_dir, image_names[idx - 1])):
+                continue
+            if result is not None and result == 'fail':
+                shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
+                            os.path.join(output_dir, image_names[idx - 1]))
                 continue
             fp = tempfile.NamedTemporaryFile(suffix='.tif')
             CR = COREG(os.path.join(output_dir, image_names[idx]),
@@ -95,9 +101,7 @@ def main():
                 y_shift = CR.coreg_info['corrected_shifts_px']['y']
                 warp_matrix = np.hstack((np.identity(2), np.array([[x_shift], [y_shift]])))
                 if is_registration_suspicious(warp_matrix):
-                    print(f'Suspicious registration {image_names[idx - 1]} to {image_names[idx]}')
-                    shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
-                                os.path.join(output_dir, image_names[idx - 1]))
+                    result = 'fail'
                 else:
                     _ = CR.correct_shifts()
                     (x_min, y_min, x_max, y_max) = CR.shift.footprint_poly.bounds
@@ -106,7 +110,7 @@ def main():
                                            os.path.join(output_dir, image_names[idx - 1])],
                                           stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
                     data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info, CR.ssim_orig, CR.ssim_deshifted])
-            else:
+            if result == 'fail':
                 print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} using band [{match_band}]')
                 shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
                             os.path.join(output_dir, image_names[idx - 1]))
