@@ -179,12 +179,10 @@ def main():
             data.append([os.path.splitext(os.path.basename(mask_paths[idx]))[0], warp_matrix])
             warp_matrices.append(warp_matrix)
 
-        masks_warped = []
+        masks_warped = [warp(warp_matrices[idx], mask) for idx, mask in enumerate(masks)]
+
         for idx, mask_path in enumerate(mask_paths):
-            image_path = f'{os.path.splitext(os.path.basename(mask_path))[0]}_deshifted.jpg'
-            warped_mask = warp(warp_matrices[idx], masks[idx])
-            _ = cv2.imwrite(os.path.join(output_dir, image_path), warped_mask)
-            masks_warped.append(warped_mask)
+            _ = cv2.imwrite(os.path.basename(mask_path).replace('.png', '_deshifted.png'), masks_warped[idx])
 
         for idx, image_path in enumerate(image_paths):
             _ = cv2.imwrite(os.path.join(output_dir, os.path.basename(image_path)), warp(warp_matrices[idx], images[idx]))
