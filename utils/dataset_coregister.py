@@ -57,6 +57,8 @@ def register(src, trg, trg_mask=None, src_mask=None):
     :return: Estimated 2D transformation matrix of shape 2x3
     """
 
+    success = True
+
     # Parameters of registration
     warp_mode = cv2.MOTION_TRANSLATION
 
@@ -83,12 +85,14 @@ def register(src, trg, trg_mask=None, src_mask=None):
         )
     except cv2.error:
         warp_matrix = np.eye(2, 3, dtype=np.float32)
+        success = False
 
     # Use identity matrix if registration is suspicious
     if is_registration_suspicious(warp_matrix):
         warp_matrix = np.eye(2, 3, dtype=np.float32)
+        success = False
 
-    return warp_matrix
+    return warp_matrix, success
 
 
 def warp(warp_matrix, img, iflag=cv2.INTER_NEAREST, interpolation_type=InterpolationType.CUBIC):
@@ -142,7 +146,7 @@ def main():
     mean_scores_raw = []
     mean_scores_reg = []
 
-    data = []
+    warp_data = []
 
     for eopatch_idx in get_patch_indices(output_dir):
 
@@ -175,9 +179,10 @@ def main():
 
         warp_matrices = []
         for idx, mask in enumerate(mask_paths):
-            warp_matrix = register(mask_ref, masks[idx])
-            data.append([os.path.splitext(os.path.basename(mask_paths[idx]))[0], warp_matrix])
-            warp_matrices.append(warp_matrix)
+            warp_matrix, succeeded = register(mask_ref, masks[idx])
+            if succeeded:
+                warp_data.append([os.path.splitext(os.path.basename(mask_paths[idx]))[0], warp_matrix])
+                warp_matrices.append(warp_matrix)
 
         masks_warped = [warp(warp_matrices[idx], mask) for idx, mask in enumerate(masks)]
 
@@ -192,8 +197,9 @@ def main():
         print(mean_score)
         mean_scores_reg.append(mean_score)
 
-    df = pd.DataFrame(data, columns=['Image', 'Warp Matrix'])
-    df.to_pickle(os.path.join(output_dir, 'warp_matrices.pkl'))
+    if not os.path.exists(os.path.join(output_dir, 'warp_matrices.pkl')):
+        df = pd.DataFrame(warp_data, columns=['Image', 'Warp Matrix'])
+        df.to_pickle(os.path.join(output_dir, 'warp_matrices.pkl'))
 
     print('mean raw score')
     print(np.mean(mean_scores_raw))
