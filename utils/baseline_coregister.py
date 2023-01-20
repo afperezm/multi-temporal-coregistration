@@ -57,7 +57,8 @@ def main():
 
     ref_date = datetime(2020, 7, 1)
 
-    data = []
+    coreg_data = []
+    warp_data = []
 
     for eopatch_idx in get_patch_indices(data_dir):
 
@@ -109,15 +110,20 @@ def main():
                                            fp.name,
                                            os.path.join(output_dir, image_names[idx - 1])],
                                           stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-                    data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info, CR.ssim_orig, CR.ssim_deshifted])
+                    coreg_data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info, CR.ssim_orig, CR.ssim_deshifted])
+                    warp_data.append([os.path.splitext(image_names[idx - 1])[0], warp_matrix])
             if result == 'fail':
                 print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} using band [{match_band}]')
                 shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
                             os.path.join(output_dir, image_names[idx - 1]))
             fp.close()
 
+    if not os.path.exists(os.path.join(output_dir, 'warp_matrices.pkl')):
+        df = pd.DataFrame(warp_data, columns=['Image', 'Warp Matrix'])
+        df.to_pickle(os.path.join(output_dir, 'warp_matrices.pkl'))
+
     if not os.path.exists(os.path.join(output_dir, 'coreg_info.pkl')):
-        df = pd.DataFrame(data, columns=['Image', 'COREG Info', 'SSIM Original', 'SSIM DeShifted'])
+        df = pd.DataFrame(coreg_data, columns=['Image', 'COREG Info', 'SSIM Original', 'SSIM DeShifted'])
         df.to_pickle(os.path.join(output_dir, 'coreg_info.pkl'))
 
 
