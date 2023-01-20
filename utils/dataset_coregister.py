@@ -190,7 +190,7 @@ def main():
             _ = cv2.imwrite(os.path.basename(mask_path).replace('.png', '_deshifted.png'), masks_warped[idx])
 
         for idx, image_path in enumerate(image_paths):
-            _ = cv2.imwrite(os.path.join(output_dir, os.path.basename(image_path)), warp(warp_matrices[idx], images[idx]))
+            _ = cv2.imwrite(os.path.join(output_dir, os.path.basename(image_path).replace('.jpg', '_deshifted.jpg')), warp(warp_matrices[idx], images[idx]))
 
         scores = [jaccard_score(mask_gt.flatten(), mask.flatten(), pos_label=255, zero_division=1) for mask in masks_warped]
         mean_score = np.mean(scores)
