@@ -57,6 +57,7 @@ def main():
 
     ref_date = datetime(2020, 7, 1)
 
+    bounds_data = []
     coreg_data = []
     warp_data = []
 
@@ -105,11 +106,8 @@ def main():
                     result = 'fail'
                 else:
                     _ = CR.correct_shifts()
-                    (x_min, y_min, x_max, y_max) = CR.shift.footprint_poly.bounds
-                    subprocess.check_call(['gdalwarp', '-te', str(x_min), str(y_min), str(x_max), str(y_max),
-                                           fp.name,
-                                           os.path.join(output_dir, image_names[idx - 1])],
-                                          stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                    shutil.copy(fp.name, os.path.join(output_dir, image_names[idx - 1]))
+                    bounds_data.append([os.path.splitext(image_names[idx - 1])[0], CR.shift.footprint_poly.bounds])
                     coreg_data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info, CR.ssim_orig, CR.ssim_deshifted])
                     warp_data.append([os.path.splitext(image_names[idx - 1])[0], warp_matrix])
             if result == 'fail':
@@ -117,6 +115,17 @@ def main():
                 shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
                             os.path.join(output_dir, image_names[idx - 1]))
             fp.close()
+
+    for bounds in bounds_data:
+        (x_min, y_min, x_max, y_max) = bounds[1]
+        with tempfile.NamedTemporaryFile(suffix='.tif') as fp:
+            subprocess.check_call(['gdalwarp', '-te', str(x_min), str(y_min), str(x_max), str(y_max),
+                                   os.path.join(output_dir, f'{bounds[0]}.tif'), fp.name],
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            # subprocess.check_call(['gdal_translate', '-projwin', str(x_min), str(y_max), str(x_max), str(y_min),
+            #                        '-of', 'GTiff', os.path.join(output_dir, f'{bounds[0]}.tif'), fp.name],
+            #                       stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            shutil.copy(fp.name, os.path.join(output_dir, f'{bounds[0]}.tif'))
 
     if not os.path.exists(os.path.join(output_dir, 'warp_matrices.pkl')):
         df = pd.DataFrame(warp_data, columns=['Image', 'Warp Matrix'])
