@@ -11,6 +11,7 @@ import warnings
 
 from arosics import COREG
 from datetime import datetime
+from tqdm import tqdm
 
 MAX_TRANSLATION = 5
 MAX_ROTATION = np.pi / 9
@@ -116,7 +117,7 @@ def main():
                             os.path.join(output_dir, image_names[idx - 1]))
             fp.close()
 
-    for bounds in bounds_data:
+    for bounds in tqdm(bounds_data):
         (x_min, y_min, x_max, y_max) = bounds[1]
         with tempfile.NamedTemporaryFile(suffix='.tif') as fp:
             subprocess.check_call(['gdalwarp', '-te', str(x_min), str(y_min), str(x_max), str(y_max),
