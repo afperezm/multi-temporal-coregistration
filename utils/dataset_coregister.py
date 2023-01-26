@@ -197,7 +197,7 @@ def main():
         mean_scores_reg.append(mean_score)
 
     if not os.path.exists(os.path.join(output_dir, 'warp_matrices.pkl')):
-        df = pd.DataFrame(warp_data, columns=['Image', 'Warp Matrix'])
+        df = pd.DataFrame(warp_data, columns=['Image', 'Success', 'Warp Matrix'])
         df.to_pickle(os.path.join(output_dir, 'warp_matrices.pkl'))
 
     print('mean raw score')
