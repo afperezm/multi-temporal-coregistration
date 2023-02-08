@@ -8,6 +8,7 @@ import os
 import pandas as pd
 
 from enum import Enum
+from sklearn.metrics import f1_score, jaccard_score, precision_score, recall_score
 from sklearn.metrics import jaccard_score
 
 MAX_TRANSLATION = 20
@@ -135,6 +136,17 @@ def get_patch_indices(output_dir):
     return sorted(patches)
 
 
+def read_mask(img_path):
+
+    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    img = np.array(img, np.float32) / 255.0
+
+    img[img >= 0.5] = 1.0
+    img[img <= 0.5] = 0.0
+
+    return img
+
+
 def main():
 
     # data_dir = '/home/andresf/data/northern-cities/gillam_mb_canada_train/'
@@ -146,6 +158,7 @@ def main():
     mean_scores_raw = []
     mean_scores_reg = []
 
+    scores_data = []
     warp_data = []
 
     for eopatch_idx in get_patch_indices(output_dir):
@@ -153,7 +166,7 @@ def main():
         print(f'eopatch-{eopatch_idx:04d}')
 
         mask_paths = sorted(glob.glob(os.path.join(output_dir, f'*_eopatch-{eopatch_idx:04d}-{eopatch_idx:04d}_mask.png')))
-        masks = [cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE) for mask_path in mask_paths]
+        masks = [read_mask(mask_path) for mask_path in mask_paths]
 
         image_paths = sorted(glob.glob(os.path.join(data_dir, f'*_eopatch-{eopatch_idx:04d}-{eopatch_idx:04d}_sat.jpg')))
         images = [cv2.imread(image_path, cv2.IMREAD_COLOR) for image_path in image_paths]
@@ -168,14 +181,14 @@ def main():
 
         print(name)
 
-        mask_gt = cv2.imread(os.path.join(data_dir, name), cv2.IMREAD_GRAYSCALE)
+        mask_gt = read_mask(os.path.join(data_dir, name))
 
-        scores = [jaccard_score(mask_gt.flatten(), mask.flatten(), pos_label=255, zero_division=1) for mask in masks]
+        scores = [jaccard_score(mask_gt.flatten(), mask.flatten(), zero_division=1) for mask in masks]
         mean_score = np.mean(scores)
         print(mean_score)
         mean_scores_raw.append(mean_score)
 
-        mask_ref = cv2.imread(os.path.join(output_dir, name), cv2.IMREAD_GRAYSCALE)
+        mask_ref = read_mask(os.path.join(output_dir, name))
 
         warp_matrices = []
         for idx, mask in enumerate(mask_paths):
@@ -193,10 +206,23 @@ def main():
         for idx, image_path in enumerate(image_paths):
             _ = cv2.imwrite(os.path.join(output_dir, os.path.basename(image_path).replace('.jpg', '_deshifted.jpg')), images_warped[idx])
 
-        scores = [jaccard_score(mask_gt.flatten(), mask.flatten(), pos_label=255, zero_division=1) for mask in masks_warped]
+        scores = [jaccard_score(mask_gt.flatten(), mask.flatten(), zero_division=1) for mask in masks_warped]
         mean_score = np.mean(scores)
         print(mean_score)
         mean_scores_reg.append(mean_score)
+
+        for idx, mask in enumerate(masks):
+            basename = os.path.basename(mask_paths[idx]).replace('_mask.png', '')
+
+            precision = precision_score(mask_gt.flatten(), mask.flatten(), zero_division=1)
+            recall = recall_score(mask_gt.flatten(), mask.flatten(), zero_division=1)
+            f1 = f1_score(mask_gt.flatten(), mask.flatten(), zero_division=1)
+            iou = jaccard_score(mask_gt.flatten(), mask.flatten(), zero_division=1)
+
+            scores_data.append([basename, precision, recall, f1, iou])
+
+    df = pd.DataFrame(scores_data, columns=['Image', 'Precision', 'Recall', 'F1-score', 'IoU'])
+    df.to_pickle(os.path.join(output_dir, 'scores_coreg.pkl'))
 
     if not os.path.exists(os.path.join(output_dir, 'warp_matrices.pkl')):
         df = pd.DataFrame(warp_data, columns=['Image', 'Success', 'Warp Matrix'])
