@@ -7,7 +7,7 @@ for fold in 0 1 2 3 4 5; do
   echo -e "\n##############\n### FOLD ${fold} ###\n##############\n"
 
   data_dir="${HOME}/data/northern-cities/gillam_mb_canada/fold-000${fold}/test/"
-  output_dirs="${submits_dir}/dlinknet34-imagenet-gillam-all-season-fold-000${fold}-*/"
+  output_dirs="${submits_dir}/dlinknet34-imagenet-gillam-all-season-fold-000${fold}-[0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]/"
 
   for output_dir in ${output_dirs}; do
     python -u utils/dataset_coregister.py \
