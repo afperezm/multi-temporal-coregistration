@@ -211,7 +211,7 @@ def main():
         print(mean_score)
         mean_scores_reg.append(mean_score)
 
-        for idx, mask in enumerate(masks):
+        for idx, mask in enumerate(masks_warped):
             basename = os.path.basename(mask_paths[idx]).replace('_mask.png', '')
 
             precision = precision_score(mask_gt.flatten(), mask.flatten(), zero_division=1)
