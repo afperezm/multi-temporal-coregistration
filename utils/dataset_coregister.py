@@ -221,8 +221,9 @@ def main():
 
             scores_data.append([basename, precision, recall, f1, iou])
 
-    df = pd.DataFrame(scores_data, columns=['Image', 'Precision', 'Recall', 'F1-score', 'IoU'])
-    df.to_pickle(os.path.join(output_dir, 'scores_coreg.pkl'))
+    if not os.path.exists(os.path.join(output_dir, 'scores_coreg.pkl')):
+        df = pd.DataFrame(scores_data, columns=['Image', 'Precision', 'Recall', 'F1-score', 'IoU'])
+        df.to_pickle(os.path.join(output_dir, 'scores_coreg.pkl'))
 
     if not os.path.exists(os.path.join(output_dir, 'warp_matrices.pkl')):
         df = pd.DataFrame(warp_data, columns=['Image', 'Success', 'Warp Matrix'])
