@@ -38,7 +38,7 @@ def main():
 
     for data_dir in data_dirs:
 
-        fold = int(os.path.basename(os.path.split(data_dir)[0]).split('-')[6])
+        fold = int(os.path.basename(os.path.split(data_dir)[-1]).split('-')[6])
 
         print(f'fold={fold}')
 
@@ -67,7 +67,7 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--submits_dir", help="Submits directory", required=True)
-    parser.add_argument("--band", help="Band used for measuring structural similarity", type=int, default=3)
+    parser.add_argument("--band", help="Band used for measuring structural similarity", type=int, default=2)
     return parser.parse_args()
 
 
