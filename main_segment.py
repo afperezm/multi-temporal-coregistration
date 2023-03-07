@@ -33,17 +33,17 @@ class DLinkNetModel(LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
-        loss, accuracy = self.shared_step(batch)
-
-        self.log("valid/loss", loss, on_step=False, on_epoch=True)
-        self.log("valid/iou", accuracy, on_step=False, on_epoch=True)
-
-    def test_step(self, batch, batch_idx):
-        loss, accuracy = self.shared_step(batch)
-
-        self.log("test/loss", loss, on_step=False, on_epoch=True)
-        self.log("test/iou", accuracy, on_step=False, on_epoch=True)
+    # def validation_step(self, batch, batch_idx):
+    #     loss, accuracy = self.shared_step(batch)
+    #
+    #     self.log("valid/loss", loss, on_step=False, on_epoch=True)
+    #     self.log("valid/iou", accuracy, on_step=False, on_epoch=True)
+    #
+    # def test_step(self, batch, batch_idx):
+    #     loss, accuracy = self.shared_step(batch)
+    #
+    #     self.log("test/loss", loss, on_step=False, on_epoch=True)
+    #     self.log("test/iou", accuracy, on_step=False, on_epoch=True)
 
     def shared_step(self, batch):
         image, mask = batch
@@ -58,7 +58,8 @@ class DLinkNetModel(LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=3, verbose=True)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=3,
+                                                               verbose=True)
         return {"optimizer": optimizer, "scheduler": scheduler, "monitor": "train/loss"}
 
 
