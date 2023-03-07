@@ -36,8 +36,8 @@ class DLinkNetModel(LightningModule):
     def validation_step(self, batch, batch_idx):
         loss, accuracy = self.shared_step(batch)
 
-        self.log("valid/loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log("valid/iou", accuracy, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("valid/loss", loss, on_step=False, on_epoch=True)
+        self.log("valid/iou", accuracy, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
         loss, accuracy = self.shared_step(batch)
@@ -97,7 +97,8 @@ def main():
     early_stop_callback = EarlyStopping(monitor="train/loss", min_delta=0.00, patience=6, verbose=True, mode="min")
 
     # Initialize trainer
-    trainer = pl.Trainer(logger=logger, callbacks=[early_stop_callback], enable_progress_bar=True, max_epochs=epochs, accelerator=device)
+    trainer = pl.Trainer(logger=logger, callbacks=[early_stop_callback], enable_progress_bar=False, max_epochs=epochs,
+                         accelerator=device)
 
     # Perform training
     trainer.fit(model=roads_model, train_dataloaders=train_dataloader)
