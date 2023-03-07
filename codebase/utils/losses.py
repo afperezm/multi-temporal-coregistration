@@ -3,30 +3,22 @@ import torch.nn as nn
 
 
 class DiceBCELoss(nn.Module):
-    def __init__(self, batch=True):
+    def __init__(self, smooth=0.0):
         super(DiceBCELoss, self).__init__()
-        self.batch = batch
+        self.smooth = smooth
         self.bce_loss = nn.BCELoss()
 
-    def soft_dice_coefficient(self, y_true, y_pred):
-        smooth = 0.0  # may change
-        if self.batch:
-            i = torch.sum(y_true)
-            j = torch.sum(y_pred)
-            intersection = torch.sum(y_true * y_pred)
-        else:
-            i = y_true.sum(1).sum(1).sum(1)
-            j = y_pred.sum(1).sum(1).sum(1)
-            intersection = (y_true * y_pred).sum(1).sum(1).sum(1)
-        score = (2. * intersection + smooth) / (i + j + smooth)
-        # score = (intersection + smooth) / (i + j - intersection + smooth)#iou
+    def soft_dice_coefficient(self, y_pred, y_true):
+        total = torch.sum(y_pred) + torch.sum(y_true)
+        intersection = torch.sum(y_pred * y_true)
+        score = (2. * intersection + self.smooth) / (total + self.smooth)
         return score.mean()
 
-    def soft_dice_loss(self, y_true, y_pred):
-        loss = 1 - self.soft_dice_coefficient(y_true, y_pred)
-        return loss
+    def soft_dice_loss(self, y_pred, y_true):
+        dice_value = self.soft_dice_coefficient(y_pred, y_true)
+        return 1 - dice_value
 
-    def __call__(self, y_true, y_pred):
+    def __call__(self, y_pred, y_true):
         a = self.bce_loss(y_pred, y_true)
-        b = self.soft_dice_loss(y_true, y_pred)
+        b = self.soft_dice_loss(y_pred, y_true)
         return a + b
