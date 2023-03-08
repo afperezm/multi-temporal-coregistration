@@ -63,7 +63,7 @@ class DLinkNetModel(LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=3,
                                                                verbose=True)
-        return {"optimizer": optimizer, "scheduler": scheduler, "monitor": "train/loss"}
+        return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler, "monitor": "train/loss"}}
 
 
 def main():
