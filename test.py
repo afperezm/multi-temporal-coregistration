@@ -45,10 +45,10 @@ class TTAFrame:
         img3 = np.array(img1)[:, :, ::-1]
         img4 = np.array(img2)[:, :, ::-1]
 
-        img1 = img1.transpose(0, 3, 1, 2)
-        img2 = img2.transpose(0, 3, 1, 2)
-        img3 = img3.transpose(0, 3, 1, 2)
-        img4 = img4.transpose(0, 3, 1, 2)
+        img1 = img1.transpose((0, 3, 1, 2))
+        img2 = img2.transpose((0, 3, 1, 2))
+        img3 = img3.transpose((0, 3, 1, 2))
+        img4 = img4.transpose((0, 3, 1, 2))
 
         img1 = V(torch.Tensor(np.array(img1, np.float32) / 255.0 * 3.2 - 1.6).to(self.device))
         img2 = V(torch.Tensor(np.array(img2, np.float32) / 255.0 * 3.2 - 1.6).to(self.device))
@@ -73,10 +73,10 @@ class TTAFrame:
         img3 = np.array(img1)[:, :, ::-1]
         img4 = np.array(img2)[:, :, ::-1]
 
-        img1 = img1.transpose(0, 3, 1, 2)
-        img2 = img2.transpose(0, 3, 1, 2)
-        img3 = img3.transpose(0, 3, 1, 2)
-        img4 = img4.transpose(0, 3, 1, 2)
+        img1 = img1.transpose((0, 3, 1, 2))
+        img2 = img2.transpose((0, 3, 1, 2))
+        img3 = img3.transpose((0, 3, 1, 2))
+        img4 = img4.transpose((0, 3, 1, 2))
 
         img1 = V(torch.Tensor(np.array(img1, np.float32) / 255.0 * 3.2 - 1.6).to(self.device))
         img2 = V(torch.Tensor(np.array(img2, np.float32) / 255.0 * 3.2 - 1.6).to(self.device))
@@ -97,13 +97,13 @@ class TTAFrame:
         img = cv2.imread(path)  # .transpose(2,0,1)[None]
         img90 = np.array(np.rot90(img))
         img1 = np.concatenate([img[None], img90[None]])
-        img2 = np.array(img1)[:, ::-1]
+        img2 = np.array(img1)[:, ::-1]  # Vertical flip
         img3 = np.concatenate([img1, img2])
-        img4 = np.array(img3)[:, :, ::-1]
-        img5 = img3.transpose(0, 3, 1, 2)
+        img4 = np.array(img3)[:, :, ::-1]  # Horizontal flip
+        img5 = img3.transpose((0, 3, 1, 2))
         img5 = np.array(img5, np.float32) / 255.0 * 3.2 - 1.6
         img5 = V(torch.Tensor(img5).to(self.device))
-        img6 = img4.transpose(0, 3, 1, 2)
+        img6 = img4.transpose((0, 3, 1, 2))
         img6 = np.array(img6, np.float32) / 255.0 * 3.2 - 1.6
         img6 = V(torch.Tensor(img6).to(self.device))
 
@@ -124,7 +124,7 @@ class TTAFrame:
         img2 = np.array(img1)[:, ::-1]
         img3 = np.concatenate([img1, img2])
         img4 = np.array(img3)[:, :, ::-1]
-        img5 = np.concatenate([img3, img4]).transpose(0, 3, 1, 2)
+        img5 = np.concatenate([img3, img4]).transpose((0, 3, 1, 2))
         img5 = np.array(img5, np.float32) / 255.0 * 3.2 - 1.6
         img5 = V(torch.Tensor(img5).to(self.device))
 
