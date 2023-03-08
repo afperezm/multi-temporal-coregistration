@@ -42,12 +42,50 @@ class DLinkNetModel(LightningModule):
     #
     #     self.log("valid/loss", loss, on_step=False, on_epoch=True)
     #     self.log("valid/iou", accuracy, on_step=False, on_epoch=True)
-    #
-    # def test_step(self, batch, batch_idx):
-    #     loss, accuracy = self.shared_step(batch)
-    #
-    #     self.log("test/loss", loss, on_step=False, on_epoch=True)
-    #     self.log("test/iou", accuracy, on_step=False, on_epoch=True)
+
+    def test_step(self, batch, batch_idx):
+        images, masks = batch[0], batch[1]
+
+        preds_list = []
+
+        for img in images:
+            img90 = torch.rot90(img, k=1, dims=[1, 2])
+            img1 = torch.stack((img, img90))
+            img2 = torch.flip(img1, dims=[2])  # Vertical flip
+            img3 = torch.concatenate((img1, img2))
+            img4 = torch.flip(img3, dims=[3])  # Horizontal flip
+            # img5 = img3.transpose(0, 3, 1, 2)
+            # img5 = np.array(img5, np.float32) / 255.0 * 3.2 - 1.6
+            # img5 = V(torch.Tensor(img5).to(self.device))
+            img5 = img3
+            # img6 = img4.transpose(0, 3, 1, 2)
+            # img6 = np.array(img6, np.float32) / 255.0 * 3.2 - 1.6
+            # img6 = V(torch.Tensor(img6).to(self.device))
+            img6 = img4
+
+            pred_a = self.model(img5)
+            pred_b = self.model(img6)
+
+            pred1 = pred_a + torch.flip(pred_b, dims=[3])  # Revert horizontal flip
+            pred2 = pred1[:2] + torch.flip(pred1[2:], dims=[2])  # Revert vertical flip
+            pred3 = pred2[0] + torch.flip(torch.flip(torch.rot90(pred2[1], k=1, dims=[1, 2]), dims=[1]), dims=[2])
+
+            pred3[pred3 > 4.0] = 255
+            pred3[pred3 <= 4.0] = 0
+
+            pred3 = pred3 / 255.0
+            pred3[pred3 >= 0.5] = 1.0
+            pred3[pred3 < 0.5] = 0.0
+
+            preds_list.append(pred3)
+
+        preds = torch.stack(preds_list)
+
+        loss = self.criterion(preds, masks)
+        accuracy = self.metric(preds, masks)
+
+        self.log("test/loss", loss, on_step=False, on_epoch=True)
+        self.log("test/iou", accuracy, on_step=False, on_epoch=True)
 
     def shared_step(self, batch):
         image, mask = batch[0], batch[1]
@@ -72,8 +110,10 @@ def main():
     results_dir = PARAMS.results_dir
     epochs = PARAMS.epochs
     batch_size = PARAMS.batch_size
+    test_batch_size = 1 if batch_size // 4 == 0 else batch_size // 4
     learning_rate = PARAMS.learning_rate
     name = PARAMS.name
+    ckpt_path = PARAMS.ckpt_path
 
     results_dir_root = os.path.dirname(results_dir.rstrip('/'))
     results_dir_name = os.path.basename(results_dir.rstrip('/'))
@@ -89,7 +129,8 @@ def main():
 
     device = "gpu" if torch.cuda.is_available() else "cpu"
 
-    train_dataset = RoadsDataset(data_dir=data_dir, is_train=True,
+    train_dataset = RoadsDataset(data_dir=data_dir,
+                                 is_train=True,
                                  transform=Compose([transforms.RandomHSV(hue_shift_limit=(-30, 30),
                                                                          sat_shift_limit=(-5, 5),
                                                                          val_shift_limit=(-15, 15)),
@@ -102,6 +143,12 @@ def main():
                                                     transforms.Normalize(),
                                                     transforms.ToTensor()]))
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+
+    test_dataset = RoadsDataset(data_dir=data_dir,
+                                is_train=False,
+                                transform=Compose([transforms.Normalize(),
+                                                   transforms.ToTensor()]))
+    test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False, num_workers=8)
 
     # Initialize model
     roads_model = DLinkNetModel(lr=learning_rate)
@@ -120,6 +167,9 @@ def main():
     # Perform training
     trainer.fit(model=roads_model, train_dataloaders=train_dataloader)
 
+    # Perform evaluation
+    trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path=ckpt_path)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Binary masks de-shifter.")
@@ -129,6 +179,7 @@ def parse_args():
     parser.add_argument("--batch_size", help="Batch size", type=int, required=True)
     parser.add_argument("--learning_rate", help="Learning rate", type=float, default=0.0002)
     parser.add_argument("--name", help="Model name", default="dlinknet34")
+    parser.add_argument("--ckpt_path", help="Checkpoint path")
     return parser.parse_args()
 
 
