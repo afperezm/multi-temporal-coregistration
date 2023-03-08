@@ -135,7 +135,7 @@ class Normalize(object):
         mask = np.array(mask, np.float32).transpose((2, 0, 1)) / 255.0
 
         mask[mask >= 0.5] = 1
-        mask[mask <= 0.5] = 0
+        mask[mask < 0.5] = 0
 
         return image, mask
 
