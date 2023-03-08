@@ -55,17 +55,7 @@ if __name__ == "__main__":
 
     train_dataset = RoadsDataset(data_dir=data_dir,
                                  is_train=True,
-                                 transform=Compose([transforms.RandomHSV(hue_shift_limit=(-30, 30),
-                                                                         sat_shift_limit=(-5, 5),
-                                                                         val_shift_limit=(-15, 15)),
-                                                    transforms.RandomShiftScale(shift_limit=(-0.1, 0.1),
-                                                                                scale_limit=(-0.1, 0.1),
-                                                                                aspect_limit=(-0.1, 0.1)),
-                                                    transforms.RandomHorizontalFlip(),
-                                                    transforms.RandomVerticalFlip(),
-                                                    transforms.RandomRotation(),
-                                                    transforms.Normalize(),
-                                                    transforms.ToTensor()]))
+                                 transform=Compose([transforms.Normalize(), transforms.ToTensor()]))
     train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=8)
 
     for batch_idx, batch in enumerate(train_dataloader):
