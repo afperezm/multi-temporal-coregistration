@@ -165,7 +165,8 @@ def main():
                          accelerator=device)
 
     # Perform training
-    trainer.fit(model=roads_model, train_dataloaders=train_dataloader)
+    if ckpt_path is None:
+        trainer.fit(model=roads_model, train_dataloaders=train_dataloader)
 
     # Perform evaluation
     trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path=ckpt_path)
