@@ -69,7 +69,7 @@ if __name__ == "__main__":
                                                                RandomRotation(),
                                                                Normalize(),
                                                                ToTensor()]))
-    train_dataloader = DataLoader(train_dataset, batch_size=4)
+    train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=8)
 
     for batch_idx, batch in enumerate(train_dataloader):
         print(f"batch - {batch_idx} - ", batch[0].shape, batch[1].shape)
