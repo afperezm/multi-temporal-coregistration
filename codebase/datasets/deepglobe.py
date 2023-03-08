@@ -26,11 +26,11 @@ class RoadsDataset(Dataset):
         self.transform = transform
 
         if self.is_train:
-            phase = self.train_phase
+            self.phase = self.train_phase
         else:
-            phase = self.test_phase
+            self.phase = self.test_phase
 
-        image_list = list(filter(lambda x: x.find('sat') != -1, os.listdir(os.path.join(data_dir, phase))))
+        image_list = list(filter(lambda x: x.find('sat') != -1, os.listdir(os.path.join(data_dir, self.phase))))
         train_list = list(map(lambda x: x[:-8], image_list))
 
         self.ids = train_list
@@ -41,8 +41,8 @@ class RoadsDataset(Dataset):
     def __getitem__(self, index):
         index = self.ids[index]
 
-        image = cv2.imread(os.path.join(self.data_dir, f'{index}_sat.jpg'))
-        mask = cv2.imread(os.path.join(self.data_dir, f'{index}_mask.png'), cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(os.path.join(self.data_dir, self.phase, f'{index}_sat.jpg'))
+        mask = cv2.imread(os.path.join(self.data_dir, self.phase, f'{index}_mask.png'), cv2.IMREAD_GRAYSCALE)
 
         sample = (image, mask)
 
