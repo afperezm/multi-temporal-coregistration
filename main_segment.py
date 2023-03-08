@@ -3,6 +3,7 @@ import json
 import os
 import pytorch_lightning as pl
 import torch
+from pytorch_lightning.callbacks import LearningRateMonitor
 
 from codebase.datasets.deepglobe import RoadsDataset
 from codebase.models.dlinknet import DLinkNet34
@@ -108,11 +109,12 @@ def main():
     # Initialize logger
     logger = TensorBoardLogger(save_dir=results_dir_root, name=results_dir_name, version=exp_name, sub_dir="logs")
 
-    # Initialize early stopping callback
-    early_stop_callback = EarlyStopping(monitor="train/loss", min_delta=0.00, patience=6, verbose=True, mode="min")
+    # Initialize callbacks
+    early_stopping = EarlyStopping(monitor="train/loss", min_delta=0.00, patience=6, verbose=True, mode="min")
+    lr_monitor = LearningRateMonitor(logging_interval="epoch")
 
     # Initialize trainer
-    trainer = pl.Trainer(logger=logger, callbacks=[early_stop_callback], enable_progress_bar=False, max_epochs=epochs,
+    trainer = pl.Trainer(logger=logger, callbacks=[early_stopping, lr_monitor], enable_progress_bar=False, max_epochs=epochs,
                          accelerator=device)
 
     # Perform training
