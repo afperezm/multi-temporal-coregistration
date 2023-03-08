@@ -88,7 +88,7 @@ def main():
 
     device = "gpu" if torch.cuda.is_available() else "cpu"
 
-    train_dataset = RoadsDataset(root=data_dir,
+    train_dataset = RoadsDataset(data_dir=data_dir, is_train=True,
                                  transform=Compose([transforms.RandomHSV(hue_shift_limit=(-30, 30),
                                                                          sat_shift_limit=(-5, 5),
                                                                          val_shift_limit=(-15, 15)),

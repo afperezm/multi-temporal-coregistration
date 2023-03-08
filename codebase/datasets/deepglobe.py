@@ -15,13 +15,25 @@ from codebase.utils.transforms import RandomHSV, RandomShiftScale, RandomHorizon
 
 class RoadsDataset(Dataset):
 
-    def __init__(self, root, transform=None):
+    train_phase = 'train'
+    test_phase = 'test'
+
+    def __init__(self, data_dir, is_train=True, transform=None):
         super(RoadsDataset).__init__()
-        image_list = list(filter(lambda x: x.find('sat') != -1, os.listdir(root)))
-        train_list = list(map(lambda x: x[:-8], image_list))
-        self.ids = train_list
-        self.root = root
+
+        self.data_dir = data_dir
+        self.is_train = is_train
         self.transform = transform
+
+        if self.is_train:
+            phase = self.train_phase
+        else:
+            phase = self.test_phase
+
+        image_list = list(filter(lambda x: x.find('sat') != -1, os.listdir(os.path.join(data_dir, phase))))
+        train_list = list(map(lambda x: x[:-8], image_list))
+
+        self.ids = train_list
 
     def __len__(self):
         return len(self.ids)
@@ -29,8 +41,8 @@ class RoadsDataset(Dataset):
     def __getitem__(self, index):
         index = self.ids[index]
 
-        image = cv2.imread(os.path.join(self.root, f'{index}_sat.jpg'))
-        mask = cv2.imread(os.path.join(self.root, f'{index}_mask.png'), cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(os.path.join(self.data_dir, f'{index}_sat.jpg'))
+        mask = cv2.imread(os.path.join(self.data_dir, f'{index}_mask.png'), cv2.IMREAD_GRAYSCALE)
 
         sample = (image, mask)
 
@@ -44,7 +56,8 @@ if __name__ == "__main__":
 
     data_dir = sys.argv[1]
 
-    train_dataset = RoadsDataset(root=data_dir,
+    train_dataset = RoadsDataset(data_dir=data_dir,
+                                 is_train=True,
                                  transform=transforms.Compose([RandomHSV(hue_shift_limit=(-30, 30),
                                                                          sat_shift_limit=(-5, 5),
                                                                          val_shift_limit=(-15, 15)),
