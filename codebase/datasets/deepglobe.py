@@ -1,5 +1,5 @@
 """
-Based on https://github.com/asanakoy/kaggle_carvana_segmentation
+Based on https://github.com/zlckanata/DeepGlobe-Road-Extraction-Challenge
 """
 import sys
 
