@@ -10,7 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import transforms
 
 from codebase.utils.transforms import RandomHSV, RandomShiftScale, RandomHorizontalFlip, RandomVerticalFlip, \
-    RandomRotation, ToTensor
+    RandomRotation, ToTensor, Normalize
 
 
 class RoadsDataset(Dataset):
@@ -32,7 +32,7 @@ class RoadsDataset(Dataset):
         image = cv2.imread(os.path.join(self.root, f'{index}_sat.jpg'))
         mask = cv2.imread(os.path.join(self.root, f'{index}_mask.png'), cv2.IMREAD_GRAYSCALE)
 
-        sample = {'image': image, 'mask': mask}
+        sample = (image, mask)
 
         if self.transform:
             sample = self.transform(sample)
@@ -54,8 +54,9 @@ if __name__ == "__main__":
                                                                RandomHorizontalFlip(),
                                                                RandomVerticalFlip(),
                                                                RandomRotation(),
+                                                               Normalize(),
                                                                ToTensor()]))
     train_dataloader = DataLoader(train_dataset, batch_size=4)
 
     for batch_idx, batch in enumerate(train_dataloader):
-        print(f"batch - {batch_idx} - ", batch['image'].shape, batch['mask'].shape)
+        print(f"batch - {batch_idx} - ", batch[0].shape, batch[1].shape)

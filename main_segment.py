@@ -49,7 +49,7 @@ class DLinkNetModel(LightningModule):
     #     self.log("test/iou", accuracy, on_step=False, on_epoch=True)
 
     def shared_step(self, batch):
-        image, mask = batch
+        image, mask = batch[0], batch[1]
 
         pred = self.model(image)
 

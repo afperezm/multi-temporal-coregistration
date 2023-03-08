@@ -12,7 +12,7 @@ class RandomHSV(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample['image'], sample['mask']
+        image, mask = sample[0], sample[1]
 
         if np.random.random() < self.p:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -28,7 +28,7 @@ class RandomHSV(object):
             # image = cv2.merge((s, v))
             image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
 
-        return {'image': image, 'mask': mask}
+        return image, mask
 
 
 class RandomShiftScale(object):
@@ -43,7 +43,7 @@ class RandomShiftScale(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample['image'], sample['mask']
+        image, mask = sample[0], sample[1]
 
         if np.random.random() < self.p:
             height, width, channel = image.shape
@@ -76,7 +76,7 @@ class RandomShiftScale(object):
                                        borderMode=self.border_mode,
                                        borderValue=(0, 0, 0,))
 
-        return {'image': image, 'mask': mask}
+        return image, mask
 
 
 class RandomHorizontalFlip(object):
@@ -85,13 +85,13 @@ class RandomHorizontalFlip(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample['image'], sample['mask']
+        image, mask = sample[0], sample[1]
 
         if np.random.random() < self.p:
             image = cv2.flip(image, 1)
             mask = cv2.flip(mask, 1)
 
-        return {'image': image, 'mask': mask}
+        return image, mask
 
 
 class RandomVerticalFlip(object):
@@ -100,13 +100,13 @@ class RandomVerticalFlip(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample['image'], sample['mask']
+        image, mask = sample[0], sample[1]
 
         if np.random.random() < self.p:
             image = cv2.flip(image, 0)
             mask = cv2.flip(mask, 0)
 
-        return {'image': image, 'mask': mask}
+        return image, mask
 
 
 class RandomRotation(object):
@@ -115,19 +115,19 @@ class RandomRotation(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample['image'], sample['mask']
+        image, mask = sample[0], sample[1]
 
         if np.random.random() < self.p:
             image = np.rot90(image)
             mask = np.rot90(mask)
 
-        return {'image': image, 'mask': mask}
+        return image, mask
 
 
 class Normalize(object):
 
     def __call__(self, sample):
-        image, mask = sample['image'], sample['mask']
+        image, mask = sample[0], sample[1]
 
         mask = np.expand_dims(mask, axis=2)
 
@@ -137,15 +137,11 @@ class Normalize(object):
         mask[mask >= 0.5] = 1
         mask[mask <= 0.5] = 0
 
-        return {'image': image, 'mask': mask}
+        return image, mask
 
 
 class ToTensor(object):
 
     def __call__(self, sample):
-        image, mask = sample['image'], sample['mask']
-
-
-
-        return {'image': torch.from_numpy(image),
-                'mask': torch.from_numpy(mask)}
+        image, mask = sample[0], sample[1]
+        return torch.from_numpy(image), torch.from_numpy(mask)
