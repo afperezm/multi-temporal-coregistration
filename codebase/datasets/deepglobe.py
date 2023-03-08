@@ -1,16 +1,13 @@
 """
 Based on https://github.com/zlckanata/DeepGlobe-Road-Extraction-Challenge
 """
-import sys
-
 import cv2
 import os
+import sys
 
+from codebase.utils import transforms
 from torch.utils.data import Dataset, DataLoader
-from torchvision.transforms import transforms
-
-from codebase.utils.transforms import RandomHSV, RandomShiftScale, RandomHorizontalFlip, RandomVerticalFlip, \
-    RandomRotation, ToTensor, Normalize
+from torchvision.transforms import Compose
 
 
 class RoadsDataset(Dataset):
@@ -58,17 +55,17 @@ if __name__ == "__main__":
 
     train_dataset = RoadsDataset(data_dir=data_dir,
                                  is_train=True,
-                                 transform=transforms.Compose([RandomHSV(hue_shift_limit=(-30, 30),
+                                 transform=Compose([transforms.RandomHSV(hue_shift_limit=(-30, 30),
                                                                          sat_shift_limit=(-5, 5),
                                                                          val_shift_limit=(-15, 15)),
-                                                               RandomShiftScale(shift_limit=(-0.1, 0.1),
+                                                    transforms.RandomShiftScale(shift_limit=(-0.1, 0.1),
                                                                                 scale_limit=(-0.1, 0.1),
                                                                                 aspect_limit=(-0.1, 0.1)),
-                                                               RandomHorizontalFlip(),
-                                                               RandomVerticalFlip(),
-                                                               RandomRotation(),
-                                                               Normalize(),
-                                                               ToTensor()]))
+                                                    transforms.RandomHorizontalFlip(),
+                                                    transforms.RandomVerticalFlip(),
+                                                    transforms.RandomRotation(),
+                                                    transforms.Normalize(),
+                                                    transforms.ToTensor()]))
     train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=8)
 
     for batch_idx, batch in enumerate(train_dataloader):
