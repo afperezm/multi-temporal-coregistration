@@ -127,7 +127,7 @@ def main():
     with open(os.path.join("results", exp_name, "params.json"), "w") as f:
         json.dump(vars(PARAMS), f)
 
-    device = "gpu" if torch.cuda.is_available() else "cpu"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     train_dataset = RoadsDataset(data_dir=data_dir,
                                  is_train=True,
