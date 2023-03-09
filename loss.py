@@ -1,8 +1,8 @@
-import cv2
+# import cv2
 # import malis as m
-import random
-import numpy as np
-import time
+# import random
+# import numpy as np
+# import time
 import torch
 import torch.nn as nn
 
@@ -104,44 +104,44 @@ class DiceBCELoss(nn.Module):
 #         return cl_dice
 
 
-class SoftDiceClDiceLoss(nn.Module):
-    def __init__(self, iterations=20, alpha=0.5, smooth=1e-7):
-        super(SoftDiceClDiceLoss, self).__init__()
-        self.iterations = iterations
-        self.smooth = smooth
-        self.alpha = alpha
-
-    def soft_dice(self, y_true, y_pred):
-        """[function to compute dice loss]
-
-        Args:
-            y_true ([float32]): [ground truth image]
-            y_pred ([float32]): [predicted image]
-
-        Returns:
-            [float32]: [loss value]
-        """
-
-        intersection = torch.sum((y_true * y_pred)[:, 0:, ...])
-        coefficient = (2. * intersection + self.smooth) / (
-                torch.sum(y_true[:, 0:, ...]) + torch.sum(y_pred[:, 0:, ...]) + self.smooth)
-
-        return 1. - coefficient
-
-    def forward(self, y_true, y_pred):
-
-        dice = self.soft_dice(y_true, y_pred)
-        skel_pred = soft_skel(y_pred, self.iterations)
-        skel_true = soft_skel(y_true, self.iterations)
-        tprec = (torch.sum(torch.multiply(skel_pred, y_true)[:, 0:, ...]) + self.smooth) / (
-                torch.sum(skel_pred[:, 0:, ...]) + self.smooth)
-        tsens = (torch.sum(torch.multiply(skel_true, y_pred)[:, 0:, ...]) + self.smooth) / (
-                torch.sum(skel_true[:, 0:, ...]) + self.smooth)
-        cl_dice = 1. - 2.0 * (tprec * tsens) / (tprec + tsens)
-
-        loss_value = (1.0 - self.alpha) * dice + self.alpha * cl_dice
-
-        return loss_value
+# class SoftDiceClDiceLoss(nn.Module):
+#     def __init__(self, iterations=20, alpha=0.5, smooth=1e-7):
+#         super(SoftDiceClDiceLoss, self).__init__()
+#         self.iterations = iterations
+#         self.smooth = smooth
+#         self.alpha = alpha
+#
+#     def soft_dice(self, y_true, y_pred):
+#         """[function to compute dice loss]
+#
+#         Args:
+#             y_true ([float32]): [ground truth image]
+#             y_pred ([float32]): [predicted image]
+#
+#         Returns:
+#             [float32]: [loss value]
+#         """
+#
+#         intersection = torch.sum((y_true * y_pred)[:, 0:, ...])
+#         coefficient = (2. * intersection + self.smooth) / (
+#                 torch.sum(y_true[:, 0:, ...]) + torch.sum(y_pred[:, 0:, ...]) + self.smooth)
+#
+#         return 1. - coefficient
+#
+#     def forward(self, y_true, y_pred):
+#
+#         dice = self.soft_dice(y_true, y_pred)
+#         skel_pred = soft_skel(y_pred, self.iterations)
+#         skel_true = soft_skel(y_true, self.iterations)
+#         tprec = (torch.sum(torch.multiply(skel_pred, y_true)[:, 0:, ...]) + self.smooth) / (
+#                 torch.sum(skel_pred[:, 0:, ...]) + self.smooth)
+#         tsens = (torch.sum(torch.multiply(skel_true, y_pred)[:, 0:, ...]) + self.smooth) / (
+#                 torch.sum(skel_true[:, 0:, ...]) + self.smooth)
+#         cl_dice = 1. - 2.0 * (tprec * tsens) / (tprec + tsens)
+#
+#         loss_value = (1.0 - self.alpha) * dice + self.alpha * cl_dice
+#
+#         return loss_value
 
 
 # class ConnectivityLoss(nn.Module):
@@ -251,66 +251,66 @@ class SoftDiceClDiceLoss(nn.Module):
 #         return loss_value.sum()
 
 
-def apply_edt(img):
-    result = cv2.distanceTransform(img.astype(np.uint8), distanceType=cv2.DIST_L2, maskSize=3, dstType=cv2.CV_8U)
-    result2 = cv2.normalize(result, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-    return result2
+# def apply_edt(img):
+#     result = cv2.distanceTransform(img.astype(np.uint8), distanceType=cv2.DIST_L2, maskSize=3, dstType=cv2.CV_8U)
+#     result2 = cv2.normalize(result, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+#     return result2
 
 
-if __name__ == "__main__":
-
-    data_dir = '/home/andresf/data/deepglobe-roads/train/'
-    name = '768086_sat.jpg'
-
-    mask = cv2.imread(data_dir + name.replace('_sat.jpg', '_mask.png'), cv2.IMREAD_GRAYSCALE)
-    mask = np.array(mask, np.float32) / 255.0
-    mask[mask >= 0.5] = 1.0
-    mask[mask <= 0.5] = 0.0
-    # mask = np.expand_dims(np.expand_dims(mask, axis=0), axis=0)
-
-    pred_name = '/home/andresf/Downloads/768086_mask.npy'
-    pred = np.load(pred_name)
-    # pred = np.array(pred, np.float32) / 8.0
-    # pred = np.expand_dims(np.expand_dims(pred, axis=0), axis=0)
-    pred[pred > 4.0] = 255
-    pred[pred <= 4.0] = 0
-
-    # loss = PersistenceLoss()
-    #
-    # random.seed(42)
-    #
-    # t0 = time.time()
-    # topo_loss = loss(torch.tensor(mask), torch.tensor(pred))
-    # t1 = time.time()
-    #
-    # print(t1 - t0, topo_loss)
-
-    mask_edt = apply_edt(mask)
-    pred_edt = apply_edt(pred)
-
-    from matplotlib import pyplot as plt
-
-    fig, axes = plt.subplots(nrows=2, ncols=2)
-
-    axes[0][0].imshow(mask)
-    axes[0][1].imshow(pred)
-    axes[1][0].imshow(mask_edt, cmap=plt.get_cmap('gray'))
-    axes[1][1].imshow(pred_edt, cmap=plt.get_cmap('gray'))
-
-    fig.show()
-
-    mask_edt = np.expand_dims(np.expand_dims(mask_edt, axis=0), axis=0)
-    pred_edt = np.expand_dims(np.expand_dims(pred_edt, axis=0), axis=0)
-
-    mask_edt = 1 - mask_edt.astype(np.float32) / 255.0
-    pred_edt = 1 - pred_edt.astype(np.float32) / 255.0
-
-    # loss = nn.MSELoss()
-    loss = ConnectivityLoss()
-
-    t0 = time.time()
-    topo_loss = loss(torch.tensor(mask_edt), torch.tensor(pred_edt))
-    # mse_loss = loss(torch.tensor(pred_edt), torch.tensor(mask_edt))
-    t1 = time.time()
-
-    print(t1 - t0, topo_loss)
+# if __name__ == "__main__":
+#
+#     data_dir = '/home/andresf/data/deepglobe-roads/train/'
+#     name = '768086_sat.jpg'
+#
+#     mask = cv2.imread(data_dir + name.replace('_sat.jpg', '_mask.png'), cv2.IMREAD_GRAYSCALE)
+#     mask = np.array(mask, np.float32) / 255.0
+#     mask[mask >= 0.5] = 1.0
+#     mask[mask <= 0.5] = 0.0
+#     # mask = np.expand_dims(np.expand_dims(mask, axis=0), axis=0)
+#
+#     pred_name = '/home/andresf/Downloads/768086_mask.npy'
+#     pred = np.load(pred_name)
+#     # pred = np.array(pred, np.float32) / 8.0
+#     # pred = np.expand_dims(np.expand_dims(pred, axis=0), axis=0)
+#     pred[pred > 4.0] = 255
+#     pred[pred <= 4.0] = 0
+#
+#     # loss = PersistenceLoss()
+#     #
+#     # random.seed(42)
+#     #
+#     # t0 = time.time()
+#     # topo_loss = loss(torch.tensor(mask), torch.tensor(pred))
+#     # t1 = time.time()
+#     #
+#     # print(t1 - t0, topo_loss)
+#
+#     mask_edt = apply_edt(mask)
+#     pred_edt = apply_edt(pred)
+#
+#     from matplotlib import pyplot as plt
+#
+#     fig, axes = plt.subplots(nrows=2, ncols=2)
+#
+#     axes[0][0].imshow(mask)
+#     axes[0][1].imshow(pred)
+#     axes[1][0].imshow(mask_edt, cmap=plt.get_cmap('gray'))
+#     axes[1][1].imshow(pred_edt, cmap=plt.get_cmap('gray'))
+#
+#     fig.show()
+#
+#     mask_edt = np.expand_dims(np.expand_dims(mask_edt, axis=0), axis=0)
+#     pred_edt = np.expand_dims(np.expand_dims(pred_edt, axis=0), axis=0)
+#
+#     mask_edt = 1 - mask_edt.astype(np.float32) / 255.0
+#     pred_edt = 1 - pred_edt.astype(np.float32) / 255.0
+#
+#     # loss = nn.MSELoss()
+#     loss = ConnectivityLoss()
+#
+#     t0 = time.time()
+#     topo_loss = loss(torch.tensor(mask_edt), torch.tensor(pred_edt))
+#     # mse_loss = loss(torch.tensor(pred_edt), torch.tensor(mask_edt))
+#     t1 = time.time()
+#
+#     print(t1 - t0, topo_loss)
