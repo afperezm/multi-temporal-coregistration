@@ -7,7 +7,7 @@ import torch
 
 from data import ImageFolder
 from framework import MyFrame
-from loss import DiceBCELoss
+from codebase.utils.losses import DiceBCELoss
 from metric import BinaryAccuracy
 from tqdm import tqdm
 # from networks.dinknet import DLinkNet18
