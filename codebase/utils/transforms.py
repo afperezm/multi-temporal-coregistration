@@ -88,8 +88,8 @@ class RandomHorizontalFlip(object):
         image, mask = sample[0], sample[1]
 
         if np.random.random() < self.p:
-            image = cv2.flip(image, 1)
-            mask = cv2.flip(mask, 1)
+            image = np.fliplr(image).copy()
+            mask = np.fliplr(mask).copy()
 
         return image, mask
 
@@ -103,8 +103,8 @@ class RandomVerticalFlip(object):
         image, mask = sample[0], sample[1]
 
         if np.random.random() < self.p:
-            image = cv2.flip(image, 0)
-            mask = cv2.flip(mask, 0)
+            image = np.flipud(image).copy()
+            mask = np.flipud(mask).copy()
 
         return image, mask
 
