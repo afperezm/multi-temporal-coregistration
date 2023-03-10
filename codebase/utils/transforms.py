@@ -126,18 +126,27 @@ class RandomRotation(object):
 
 class Normalize(object):
 
+    def __init__(self, feat_range=(0.0, 1.0), threshold=False):
+        self.feat_range = feat_range
+        self.threshold = threshold
+
     def __call__(self, sample):
-        image, mask = sample[0], sample[1]
+        image, label = sample[0], sample[1]
 
-        mask = np.expand_dims(mask, axis=2)
+        image = np.array(image, np.float32) / 255.0
+        image = image * (self.feat_range[1] - self.feat_range[0]) + self.feat_range[0]
+        if len(image.shape) == 2:
+            image = np.expand_dims(image, axis=2)
 
-        image = np.array(image, np.float32) / 255.0 * 3.2 - 1.6
-        mask = np.array(mask, np.float32) / 255.0
+        label = np.array(label, np.float32) / 255.0
+        if len(label.shape) == 2:
+            label = np.expand_dims(label, axis=2)
 
-        mask[mask >= 0.5] = 1
-        mask[mask < 0.5] = 0
+        if self.threshold:
+            label[label >= 0.5] = 1.0
+            label[label < 0.5] = 0.0
 
-        return image, mask
+        return image, label
 
 
 class ToTensor(object):

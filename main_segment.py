@@ -147,13 +147,13 @@ def main():
                                                     transforms.RandomHorizontalFlip(),
                                                     transforms.RandomVerticalFlip(),
                                                     transforms.RandomRotation(),
-                                                    transforms.Normalize(),
+                                                    transforms.Normalize(feat_range=(-1.6, 1.6), threshold=True),
                                                     transforms.ToTensor()]))
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
     test_dataset = RoadsDataset(data_dir=data_dir,
                                 is_train=False,
-                                transform=Compose([transforms.Normalize(),
+                                transform=Compose([transforms.Normalize(feat_range=(-1.6, 1.6), threshold=True),
                                                    transforms.ToTensor()]))
     test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False, num_workers=8)
 
