@@ -131,8 +131,8 @@ class Normalize(object):
 
         mask = np.expand_dims(mask, axis=2)
 
-        image = np.array(image, np.float32).transpose((2, 0, 1)) / 255.0 * 3.2 - 1.6
-        mask = np.array(mask, np.float32).transpose((2, 0, 1)) / 255.0
+        image = np.array(image, np.float32) / 255.0 * 3.2 - 1.6
+        mask = np.array(mask, np.float32) / 255.0
 
         mask[mask >= 0.5] = 1
         mask[mask < 0.5] = 0
@@ -144,4 +144,8 @@ class ToTensor(object):
 
     def __call__(self, sample):
         image, mask = sample[0], sample[1]
+
+        # Swap axis to place number of channels in front
+        image, mask = np.transpose(image, (2, 0, 1)), np.transpose(mask, (2, 0, 1))
+
         return torch.from_numpy(image), torch.from_numpy(mask)
