@@ -12,7 +12,7 @@ class RandomHSV(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample[0], sample[1]
+        image, label = sample['image'], sample['label']
 
         if np.random.random() < self.p:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -28,7 +28,7 @@ class RandomHSV(object):
             # image = cv2.merge((s, v))
             image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
 
-        return image, mask
+        return {'image': image, 'label': label}
 
 
 class RandomShiftScale(object):
@@ -43,7 +43,7 @@ class RandomShiftScale(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample[0], sample[1]
+        image, label = sample['image'], sample['label']
 
         if np.random.random() < self.p:
             height, width, channel = image.shape
@@ -71,12 +71,12 @@ class RandomShiftScale(object):
                                         flags=cv2.INTER_LINEAR,
                                         borderMode=self.border_mode,
                                         borderValue=(0, 0, 0,))
-            mask = cv2.warpPerspective(mask, mat, (width, height),
+            label = cv2.warpPerspective(label, mat, (width, height),
                                        flags=cv2.INTER_LINEAR,
                                        borderMode=self.border_mode,
                                        borderValue=(0, 0, 0,))
 
-        return image, mask
+        return {'image': image, 'label': label}
 
 
 class RandomHorizontalFlip(object):
@@ -85,13 +85,13 @@ class RandomHorizontalFlip(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample[0], sample[1]
+        image, label = sample['image'], sample['label']
 
         if np.random.random() < self.p:
             image = np.fliplr(image).copy()
-            mask = np.fliplr(mask).copy()
+            label = np.fliplr(label).copy()
 
-        return image, mask
+        return {'image': image, 'label': label}
 
 
 class RandomVerticalFlip(object):
@@ -100,13 +100,13 @@ class RandomVerticalFlip(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample[0], sample[1]
+        image, label = sample['image'], sample['label']
 
         if np.random.random() < self.p:
             image = np.flipud(image).copy()
-            mask = np.flipud(mask).copy()
+            label = np.flipud(label).copy()
 
-        return image, mask
+        return {'image': image, 'label': label}
 
 
 class RandomRotation(object):
@@ -115,13 +115,13 @@ class RandomRotation(object):
         self.p = p
 
     def __call__(self, sample):
-        image, mask = sample[0], sample[1]
+        image, label = sample['image'], sample['label']
 
         if np.random.random() < self.p:
             image = np.rot90(image)
-            mask = np.rot90(mask)
+            label = np.rot90(label)
 
-        return image, mask
+        return {'image': image, 'label': label}
 
 
 class Normalize(object):
@@ -131,7 +131,7 @@ class Normalize(object):
         self.threshold = threshold
 
     def __call__(self, sample):
-        image, label = sample[0], sample[1]
+        image, label = sample['image'], sample['label']
 
         image = np.array(image, np.float32) / 255.0
         image = image * (self.feat_range[1] - self.feat_range[0]) + self.feat_range[0]
@@ -146,15 +146,15 @@ class Normalize(object):
             label[label >= 0.5] = 1.0
             label[label < 0.5] = 0.0
 
-        return image, label
+        return {'image': image, 'label': label}
 
 
 class ToTensor(object):
 
     def __call__(self, sample):
-        image, mask = sample[0], sample[1]
+        image, label = sample['image'], sample['label']
 
         # Swap axis to place number of channels in front
-        image, mask = np.transpose(image, (2, 0, 1)), np.transpose(mask, (2, 0, 1))
+        image, label = np.transpose(image, (2, 0, 1)), np.transpose(label, (2, 0, 1))
 
-        return torch.from_numpy(image), torch.from_numpy(mask)
+        return {'image': torch.from_numpy(image), 'label': torch.from_numpy(label)}

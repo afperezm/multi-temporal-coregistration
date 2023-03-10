@@ -47,9 +47,9 @@ class DLinkNetModel(LightningModule):
     #     self.log("valid/iou", accuracy, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
-        images, masks = batch[0], batch[1]
+        images, labels = batch['image'], batch['label']
 
-        preds_list = []
+        predictions_list = []
 
         for img in images:
             img90 = torch.rot90(img, k=1, dims=[1, 2])
@@ -80,14 +80,14 @@ class DLinkNetModel(LightningModule):
             pred3[pred3 >= 0.5] = 1.0
             pred3[pred3 < 0.5] = 0.0
 
-            preds_list.append(pred3)
+            predictions_list.append(pred3)
 
-        preds = torch.stack(preds_list)
+        predictions = torch.stack(predictions_list)
 
-        loss_bce = self.criterion1(preds, masks)
-        loss_dice = self.criterion2(preds, masks)
+        loss_bce = self.criterion1(predictions, labels)
+        loss_dice = self.criterion2(predictions, labels)
 
-        accuracy = self.metric(preds, masks)
+        accuracy = self.metric(predictions, labels)
 
         self.log("test/loss_bce", loss_bce, on_step=False, on_epoch=True)
         self.log("test/loss_dice", loss_dice, on_step=False, on_epoch=True)

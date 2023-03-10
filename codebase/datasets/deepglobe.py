@@ -39,9 +39,9 @@ class RoadsDataset(Dataset):
         index = self.ids[index]
 
         image = cv2.imread(os.path.join(self.data_dir, self.phase, f'{index}_sat.jpg'))
-        mask = cv2.imread(os.path.join(self.data_dir, self.phase, f'{index}_mask.png'), cv2.IMREAD_GRAYSCALE)
+        label = cv2.imread(os.path.join(self.data_dir, self.phase, f'{index}_mask.png'), cv2.IMREAD_GRAYSCALE)
 
-        sample = (image, mask)
+        sample = {'image': image, 'label': label}
 
         if self.transform:
             sample = self.transform(sample)
