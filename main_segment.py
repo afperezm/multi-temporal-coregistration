@@ -3,12 +3,13 @@ import json
 import os
 import pytorch_lightning as pl
 import torch
+import torch.nn as nn
 from pytorch_lightning.callbacks import LearningRateMonitor
 
 from codebase.datasets.deepglobe import RoadsDataset
 from codebase.models.dlinknet import DLinkNet34
 from codebase.utils import transforms
-from codebase.utils.losses import DiceBCELoss
+from codebase.utils.losses import DiceLoss
 from codebase.utils.metrics import BinaryAccuracy
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -26,16 +27,18 @@ class DLinkNetModel(LightningModule):
         super().__init__()
         self.lr = lr
         self.model = DLinkNet34(backbone='imagenet')
-        self.criterion = DiceBCELoss()
+        self.criterion1 = nn.BCELoss()
+        self.criterion2 = DiceLoss()
         self.metric = BinaryAccuracy()
 
     def training_step(self, batch, batch_idx):
-        loss, accuracy = self.shared_step(batch)
+        loss_bce, loss_dice, accuracy = self.shared_step(batch)
 
-        self.log("train/loss", loss, on_step=False, on_epoch=True)
+        self.log("test/loss_bce", loss_bce, on_step=False, on_epoch=True)
+        self.log("train/loss_dice", loss_dice, on_step=False, on_epoch=True)
         self.log("train/iou", accuracy, on_step=False, on_epoch=True)
 
-        return loss
+        return loss_bce + loss_dice
 
     # def validation_step(self, batch, batch_idx):
     #     loss, accuracy = self.shared_step(batch)
@@ -81,10 +84,13 @@ class DLinkNetModel(LightningModule):
 
         preds = torch.stack(preds_list)
 
-        loss = self.criterion(preds, masks)
+        loss_bce = self.criterion1(preds, masks)
+        loss_dice = self.criterion2(preds, masks)
+
         accuracy = self.metric(preds, masks)
 
-        self.log("test/loss", loss, on_step=False, on_epoch=True)
+        self.log("test/loss_bce", loss_bce, on_step=False, on_epoch=True)
+        self.log("test/loss_dice", loss_dice, on_step=False, on_epoch=True)
         self.log("test/iou", accuracy, on_step=False, on_epoch=True)
 
     def shared_step(self, batch):
@@ -92,11 +98,12 @@ class DLinkNetModel(LightningModule):
 
         pred = self.model(image)
 
-        loss = self.criterion(pred, mask)
+        loss_bce = self.criterion1(pred, mask)
+        loss_dice = self.criterion2(pred, mask)
 
         accuracy = self.metric(pred, mask)
 
-        return loss, accuracy
+        return loss_bce, loss_dice, accuracy
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)

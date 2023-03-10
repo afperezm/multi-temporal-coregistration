@@ -12,11 +12,10 @@ import torch.nn as nn
 # from topoloss import get_topo_loss
 
 
-class DiceBCELoss(nn.Module):
-    def __init__(self, smooth=0.0):
-        super(DiceBCELoss, self).__init__()
+class DiceLoss(nn.Module):
+    def __init__(self, smooth=1e-7):
+        super(DiceLoss, self).__init__()
         self.smooth = smooth
-        self.bce_loss = nn.BCELoss()
 
     def soft_dice_coefficient(self, y_pred, y_true):
         total = torch.sum(y_pred) + torch.sum(y_true)
@@ -27,6 +26,18 @@ class DiceBCELoss(nn.Module):
     def soft_dice_loss(self, y_pred, y_true):
         dice_value = self.soft_dice_coefficient(y_pred, y_true)
         return 1 - dice_value
+
+    def __call__(self, y_pred, y_true):
+        b = self.soft_dice_loss(y_pred, y_true)
+        return b
+
+
+class DiceBCELoss(nn.Module):
+    def __init__(self, smooth=0.0):
+        super(DiceBCELoss, self).__init__()
+        self.smooth = smooth
+        self.bce_loss = nn.BCELoss()
+        self.soft_dice_loss = DiceLoss(self.smooth)
 
     def __call__(self, y_pred, y_true):
         a = self.bce_loss(y_pred, y_true)
