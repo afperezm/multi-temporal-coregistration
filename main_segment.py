@@ -4,7 +4,6 @@ import os
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from pytorch_lightning.callbacks import LearningRateMonitor
 
 from codebase.datasets.deepglobe import RoadsDataset
 from codebase.models.dlinknet import DLinkNet34
@@ -12,7 +11,7 @@ from codebase.utils import transforms
 from codebase.utils.losses import DiceLoss
 from codebase.utils.metrics import BinaryAccuracy
 from pytorch_lightning import LightningModule
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 from time import strftime
 from torch.utils.data import DataLoader
@@ -94,14 +93,14 @@ class DLinkNetModel(LightningModule):
         self.log("test/iou", accuracy, on_step=False, on_epoch=True)
 
     def shared_step(self, batch):
-        image, mask = batch[0], batch[1]
+        images, labels = batch['image'], batch['label']
 
-        pred = self.model(image)
+        predictions = self.model(images)
 
-        loss_bce = self.criterion1(pred, mask)
-        loss_dice = self.criterion2(pred, mask)
+        loss_bce = self.criterion1(predictions, labels)
+        loss_dice = self.criterion2(predictions, labels)
 
-        accuracy = self.metric(pred, mask)
+        accuracy = self.metric(predictions, labels)
 
         return loss_bce, loss_dice, accuracy
 
