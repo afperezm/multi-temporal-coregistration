@@ -33,11 +33,14 @@ class DLinkNetModel(LightningModule):
     def training_step(self, batch, batch_idx):
         loss_bce, loss_dice, accuracy = self.shared_step(batch)
 
+        loss = loss_bce + loss_dice
+
+        self.log("test/loss", loss, on_step=False, on_epoch=True)
         self.log("test/loss_bce", loss_bce, on_step=False, on_epoch=True)
         self.log("train/loss_dice", loss_dice, on_step=False, on_epoch=True)
         self.log("train/iou", accuracy, on_step=False, on_epoch=True)
 
-        return loss_bce + loss_dice
+        return loss
 
     # def validation_step(self, batch, batch_idx):
     #     loss, accuracy = self.shared_step(batch)
@@ -86,8 +89,11 @@ class DLinkNetModel(LightningModule):
         loss_bce = self.criterion1(predictions, labels)
         loss_dice = self.criterion2(predictions, labels)
 
+        loss = loss_bce + loss_dice
+
         accuracy = self.metric(predictions, labels)
 
+        self.log("test/loss", loss, on_step=False, on_epoch=True)
         self.log("test/loss_bce", loss_bce, on_step=False, on_epoch=True)
         self.log("test/loss_dice", loss_dice, on_step=False, on_epoch=True)
         self.log("test/iou", accuracy, on_step=False, on_epoch=True)
