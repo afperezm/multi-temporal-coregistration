@@ -35,8 +35,8 @@ class DLinkNetModel(LightningModule):
 
         loss = loss_bce + loss_dice
 
-        self.log("test/loss", loss, on_step=False, on_epoch=True)
-        self.log("test/loss_bce", loss_bce, on_step=False, on_epoch=True)
+        self.log("train/loss", loss, on_step=False, on_epoch=True)
+        self.log("train/loss_bce", loss_bce, on_step=False, on_epoch=True)
         self.log("train/loss_dice", loss_dice, on_step=False, on_epoch=True)
         self.log("train/iou", accuracy, on_step=False, on_epoch=True)
 
