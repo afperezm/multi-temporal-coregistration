@@ -130,7 +130,10 @@ def main():
     results_dir_root = os.path.dirname(results_dir.rstrip('/'))
     results_dir_name = os.path.basename(results_dir.rstrip('/'))
 
-    exp_name = f"{name}-{strftime('%y%m%d')}-{strftime('%H%M%S')}"
+    if os.path.exists(os.path.join("results", name)):
+        exp_name = name
+    else:
+        exp_name = f"{name}-{strftime('%y%m%d')}-{strftime('%H%M%S')}"
 
     if not os.path.exists(os.path.join("results", exp_name)):
         os.makedirs(os.path.join("results", exp_name))
