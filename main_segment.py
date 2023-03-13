@@ -179,10 +179,14 @@ def main():
                          enable_progress_bar=False, max_epochs=epochs, accelerator=device)
 
     # Perform training
-    trainer.fit(model=roads_model, train_dataloaders=train_dataloader, ckpt_path="last")
+    if ckpt_path is None:
+        trainer.fit(model=roads_model, train_dataloaders=train_dataloader, ckpt_path="last")
 
     # Perform evaluation
-    trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path="best")
+    if ckpt_path is None:
+        trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path="best")
+    else:
+        trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path=ckpt_path)
 
 
 def parse_args():
