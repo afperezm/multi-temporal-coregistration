@@ -25,7 +25,7 @@ class DLinkNetModel(LightningModule):
     def __init__(self, lr=1e-3):
         super().__init__()
         self.lr = lr
-        self.model = DLinkNet34(backbone='imagenet')
+        self.segmentation_model = DLinkNet34(backbone='imagenet')
         self.criterion1 = nn.BCELoss()
         self.criterion2 = DiceLoss()
         self.metric = BinaryAccuracy()
@@ -65,8 +65,8 @@ class DLinkNetModel(LightningModule):
             # img6 = V(torch.Tensor(img6).to(self.device))
             img6 = img4
 
-            pred_a = self.model(img5)
-            pred_b = self.model(img6)
+            pred_a = self.segmentation_model(img5)
+            pred_b = self.segmentation_model(img6)
 
             pred1 = pred_a + torch.flip(pred_b, dims=[3])  # Revert horizontal flip
             pred2 = pred1[:2] + torch.flip(pred1[2:], dims=[2])  # Revert vertical flip
@@ -95,7 +95,7 @@ class DLinkNetModel(LightningModule):
     def shared_step(self, batch):
         images, labels = batch['image'], batch['label']
 
-        predictions = self.model(images)
+        predictions = self.segmentation_model(images)
 
         loss_bce = self.criterion1(predictions, labels)
         loss_dice = self.criterion2(predictions, labels)
