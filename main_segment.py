@@ -169,13 +169,12 @@ def main():
     logger = TensorBoardLogger(save_dir=results_dir_root, name=results_dir_name, version=exp_name, sub_dir="logs")
 
     # Initialize callbacks
-    early_stopping_loss = EarlyStopping(monitor="train/loss", min_delta=0.002, patience=6, verbose=True, mode="min")
-    early_stopping_lr = EarlyStopping(monitor="lr-Adam", stopping_threshold=5e-7)
+    early_stopping = EarlyStopping(monitor="train/loss", min_delta=0.002, patience=6, verbose=True, mode="min")
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     checkpointing = ModelCheckpoint(monitor="train/loss", save_top_k=5, mode="min")
 
     # Initialize trainer
-    trainer = pl.Trainer(logger=logger, callbacks=[early_stopping_loss, early_stopping_lr, lr_monitor, checkpointing],
+    trainer = pl.Trainer(logger=logger, callbacks=[early_stopping, lr_monitor, checkpointing],
                          enable_progress_bar=False, max_epochs=epochs, accelerator=device)
 
     # Perform training
