@@ -130,10 +130,7 @@ def main():
     results_dir_root = os.path.dirname(results_dir.rstrip('/'))
     results_dir_name = os.path.basename(results_dir.rstrip('/'))
 
-    if os.path.exists(os.path.join("results", name)):
-        exp_name = name
-    else:
-        exp_name = f"{name}-{strftime('%y%m%d')}-{strftime('%H%M%S')}"
+    exp_name = f"{name}-{strftime('%y%m%d')}-{strftime('%H%M%S')}"
 
     if not os.path.exists(os.path.join("results", exp_name)):
         os.makedirs(os.path.join("results", exp_name))
@@ -181,14 +178,10 @@ def main():
                          enable_progress_bar=False, max_epochs=epochs, accelerator=device)
 
     # Perform training
-    if ckpt_path is None:
-        trainer.fit(model=roads_model, train_dataloaders=train_dataloader, ckpt_path="last")
+    trainer.fit(model=roads_model, train_dataloaders=train_dataloader, ckpt_path=ckpt_path)
 
     # Perform evaluation
-    if ckpt_path is None:
-        trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path="best")
-    else:
-        trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path=ckpt_path)
+    trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path=ckpt_path)
 
 
 def parse_args():
