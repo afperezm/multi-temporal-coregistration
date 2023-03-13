@@ -11,7 +11,7 @@ from codebase.utils import transforms
 from codebase.utils.losses import DiceLoss
 from codebase.utils.metrics import BinaryAccuracy
 from pytorch_lightning import LightningModule
-from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
+from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from time import strftime
 from torch.utils.data import DataLoader
@@ -165,10 +165,11 @@ def main():
     # Initialize callbacks
     early_stopping = EarlyStopping(monitor="train/loss", min_delta=0.00, patience=6, verbose=True, mode="min")
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
+    checkpointing = ModelCheckpoint(monitor="train/loss", save_top_k=5, mode="min")
 
     # Initialize trainer
-    trainer = pl.Trainer(logger=logger, callbacks=[early_stopping, lr_monitor], enable_progress_bar=False, max_epochs=epochs,
-                         accelerator=device)
+    trainer = pl.Trainer(logger=logger, callbacks=[early_stopping, lr_monitor, checkpointing],
+                         enable_progress_bar=False, max_epochs=epochs, accelerator=device)
 
     # Perform training
     if ckpt_path is None:
