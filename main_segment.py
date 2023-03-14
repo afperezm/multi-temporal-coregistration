@@ -196,7 +196,7 @@ def parse_args():
     parser.add_argument("--name", help="Model name", default="dlinknet34")
     parser.add_argument("--ckpt_path", help="Checkpoint path")
     parser.add_argument("--early_stopping_min_delta", help="Min early stopping difference", type=float, default=0.002)
-    parser.add_argument("--early_stopping_patience", help="Patience for early stopping", type=float, default=6)
+    parser.add_argument("--early_stopping_patience", help="Patience for early stopping", type=int, default=6)
     return parser.parse_args()
 
 
