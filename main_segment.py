@@ -126,6 +126,8 @@ def main():
     learning_rate = PARAMS.learning_rate
     name = PARAMS.name
     ckpt_path = PARAMS.ckpt_path
+    min_delta = PARAMS.early_stopping_min_delta
+    patience = PARAMS.early_stopping_patience
 
     results_dir_root = os.path.dirname(results_dir.rstrip('/'))
     results_dir_name = os.path.basename(results_dir.rstrip('/'))
@@ -169,7 +171,7 @@ def main():
     logger = TensorBoardLogger(save_dir=results_dir_root, name=results_dir_name, version=exp_name, sub_dir="logs")
 
     # Initialize callbacks
-    early_stopping = EarlyStopping(monitor="train/loss", min_delta=0.002, patience=6, verbose=True, mode="min")
+    early_stopping = EarlyStopping(monitor="train/loss", min_delta=min_delta, patience=patience, verbose=True)
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     checkpointing = ModelCheckpoint(monitor="train/loss", save_top_k=5, mode="min")
 
@@ -193,6 +195,8 @@ def parse_args():
     parser.add_argument("--learning_rate", help="Learning rate", type=float, default=0.0002)
     parser.add_argument("--name", help="Model name", default="dlinknet34")
     parser.add_argument("--ckpt_path", help="Checkpoint path")
+    parser.add_argument("--early_stopping_min_delta", help="Min early stopping difference", type=float, default=0.002)
+    parser.add_argument("--early_stopping_patience", help="Patience for early stopping", type=float, default=6)
     return parser.parse_args()
 
 
