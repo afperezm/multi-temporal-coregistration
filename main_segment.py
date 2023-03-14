@@ -134,13 +134,6 @@ def main():
 
     exp_name = f"{name}-{strftime('%y%m%d')}-{strftime('%H%M%S')}"
 
-    if not os.path.exists(os.path.join("results", exp_name)):
-        os.makedirs(os.path.join("results", exp_name))
-
-    # Dump program arguments
-    with open(os.path.join("results", exp_name, "params.json"), "w") as f:
-        json.dump(vars(PARAMS), f)
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     train_dataset = RoadsDataset(data_dir=data_dir,
@@ -169,6 +162,9 @@ def main():
 
     # Initialize logger
     logger = TensorBoardLogger(save_dir=results_dir_root, name=results_dir_name, version=exp_name, sub_dir="logs")
+
+    # Dump program arguments
+    logger.log_hyperparams(params=PARAMS)
 
     # Initialize callbacks
     early_stopping = EarlyStopping(monitor="train/loss", min_delta=min_delta, patience=patience, verbose=True)
