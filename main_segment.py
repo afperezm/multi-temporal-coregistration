@@ -125,7 +125,7 @@ def main():
     test_batch_size = 1 if batch_size // 4 == 0 else batch_size // 4
     learning_rate = PARAMS.learning_rate
     name = PARAMS.name
-    ckpt_path = PARAMS.ckpt_path
+    test_ckpt_path = PARAMS.test_ckpt_path
     min_delta = PARAMS.early_stopping_min_delta
     patience = PARAMS.early_stopping_patience
 
@@ -176,10 +176,11 @@ def main():
                          enable_progress_bar=False, max_epochs=epochs, accelerator=device)
 
     # Perform training
-    trainer.fit(model=roads_model, train_dataloaders=train_dataloader, ckpt_path=ckpt_path)
+    if not test_ckpt_path:
+        trainer.fit(model=roads_model, train_dataloaders=train_dataloader)
 
     # Perform evaluation
-    trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path=ckpt_path)
+    trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path=test_ckpt_path)
 
 
 def parse_args():
@@ -190,7 +191,7 @@ def parse_args():
     parser.add_argument("--batch_size", help="Batch size", type=int, required=True)
     parser.add_argument("--learning_rate", help="Learning rate", type=float, default=0.0002)
     parser.add_argument("--name", help="Model name", default="dlinknet34")
-    parser.add_argument("--ckpt_path", help="Checkpoint path")
+    parser.add_argument("--test_ckpt_path", help="Test checkpoint path")
     parser.add_argument("--early_stopping_min_delta", help="Min early stopping difference", type=float, default=0.002)
     parser.add_argument("--early_stopping_patience", help="Patience for early stopping", type=int, default=6)
     return parser.parse_args()
