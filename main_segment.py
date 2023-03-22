@@ -161,7 +161,8 @@ def main():
     roads_model = DLinkNetModel(lr=learning_rate)
 
     # Initialize logger
-    logger = TensorBoardLogger(save_dir=results_dir_root, name=results_dir_name, version=exp_name, sub_dir="logs")
+    logger = TensorBoardLogger(save_dir=results_dir_root, name=results_dir_name, version=exp_name,
+                               default_hp_metric=False, sub_dir="logs")
 
     # Dump program arguments
     logger.log_hyperparams(params=PARAMS)
