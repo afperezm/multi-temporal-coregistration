@@ -14,7 +14,7 @@ from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from time import strftime
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from torchvision.transforms import Compose
 
 
@@ -149,7 +149,17 @@ def main():
                                                     transforms.RandomRotation(),
                                                     transforms.Normalize(feat_range=(-1.6, 1.6), threshold=True),
                                                     transforms.ToTensor()]))
+
+    # use 20% of training data for validation
+    train_set_size = int(len(train_dataset) * 0.8)
+    valid_set_size = len(train_dataset) - train_set_size
+
+    # split the train set into two
+    seed = torch.Generator().manual_seed(42)
+    train_dataset, valid_dataset = random_split(train_dataset, [train_set_size, valid_set_size], generator=seed)
+
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+    valid_dataloader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False, num_workers=8)
 
     test_dataset = RoadsDataset(data_dir=data_dir,
                                 is_train=False,
@@ -178,7 +188,7 @@ def main():
 
     # Perform training
     if not test_ckpt_path:
-        trainer.fit(model=roads_model, train_dataloaders=train_dataloader)
+        trainer.fit(model=roads_model, train_dataloaders=train_dataloader, val_dataloaders=valid_dataloader)
 
     # Perform evaluation
     trainer.test(model=roads_model, dataloaders=test_dataloader, ckpt_path=test_ckpt_path)
