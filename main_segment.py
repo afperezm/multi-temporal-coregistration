@@ -43,11 +43,15 @@ class DLinkNetModel(LightningModule):
 
         return loss
 
-    # def validation_step(self, batch, batch_idx):
-    #     loss, accuracy = self.shared_step(batch)
-    #
-    #     self.log("valid/loss", loss, on_step=False, on_epoch=True)
-    #     self.log("valid/iou", accuracy, on_step=False, on_epoch=True)
+    def validation_step(self, batch, batch_idx):
+        loss_bce, loss_dice, accuracy = self.shared_step(batch)
+
+        loss = loss_bce + loss_dice
+
+        self.log("valid/loss", loss, on_step=False, on_epoch=True)
+        self.log("valid/loss_bce", loss_bce, on_step=False, on_epoch=True)
+        self.log("valid/loss_dice", loss_dice, on_step=False, on_epoch=True)
+        self.log("valid/iou", accuracy, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
         images, labels = batch['image'], batch['label']
