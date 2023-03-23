@@ -22,9 +22,10 @@ PARAMS = None
 
 
 class DLinkNetModel(LightningModule):
-    def __init__(self, lr=1e-3):
+    def __init__(self, lr=1e-3, min_lr=0.0):
         super().__init__()
         self.lr = lr
+        self.min_lr = min_lr
         self.segmentation_model = DLinkNet34(backbone='imagenet')
         self.criterion1 = nn.BCELoss()
         self.criterion2 = DiceLoss()
@@ -113,7 +114,7 @@ class DLinkNetModel(LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, patience=3,
-                                                               min_lr=4e-5, verbose=True)
+                                                               min_lr=self.min_lr, verbose=True)
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler, "monitor": "train/loss"}}
 
 
@@ -126,6 +127,7 @@ def main():
     learning_rate = PARAMS.learning_rate
     name = PARAMS.name
     test_ckpt_path = PARAMS.test_ckpt_path
+    scheduler_min_lr = PARAMS.scheduler_min_lr
     min_delta = PARAMS.early_stopping_min_delta
     patience = PARAMS.early_stopping_patience
 
@@ -168,7 +170,7 @@ def main():
     test_dataloader = DataLoader(test_dataset, batch_size=test_batch_size, shuffle=False, num_workers=8)
 
     # Initialize model
-    roads_model = DLinkNetModel(lr=learning_rate)
+    roads_model = DLinkNetModel(lr=learning_rate, min_lr=scheduler_min_lr)
 
     # Initialize logger
     logger = TensorBoardLogger(save_dir=results_dir_root, name=results_dir_name, version=exp_name,
@@ -203,6 +205,7 @@ def parse_args():
     parser.add_argument("--learning_rate", help="Learning rate", type=float, default=0.0002)
     parser.add_argument("--name", help="Model name", default="dlinknet34")
     parser.add_argument("--test_ckpt_path", help="Test checkpoint path")
+    parser.add_argument("--scheduler_min_lr", help="Scheduler minimum learning rate", type=float, default=0.0)
     parser.add_argument("--early_stopping_min_delta", help="Min early stopping difference", type=float, default=0.002)
     parser.add_argument("--early_stopping_patience", help="Patience for early stopping", type=int, default=6)
     return parser.parse_args()
