@@ -85,8 +85,6 @@ def main():
 
         # Co-register with latest co-registered image (the reference base is assumed to be co-registered)
         for idx in range(len(image_names) - 2, -1, -1):
-            if os.path.exists(os.path.join(output_dir, image_names[idx])):
-                continue
             if result is not None and result == 'fail':
                 shutil.copy(os.path.join(data_dir, image_names[idx]),
                             os.path.join(output_dir, image_names[idx]))
