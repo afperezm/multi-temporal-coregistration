@@ -74,6 +74,7 @@ def main():
 
         closest_date_id = np.argsort(abs(ref_date - dates))[0]
 
+        # Roll time-series moving reference base image to the end
         image_names = image_names[closest_date_id + 1:] + image_names[:closest_date_id + 1]
 
         # Copy reference base image since no need to co-register
