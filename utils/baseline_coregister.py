@@ -52,6 +52,7 @@ def main():
     data_dir = PARAMS.data_dir
     output_dir = PARAMS.output_dir
     match_band = PARAMS.match_band
+    base_mode = PARAMS.base_mode
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -83,14 +84,18 @@ def main():
 
         result = None
 
-        # Co-register with latest co-registered image (the reference base is assumed to be co-registered)
+        # Loop over reference images and co-register with next image (the base is assumed to be co-registered)
         for idx in range(len(image_names) - 2, -1, -1):
-            if result is not None and result == 'fail':
+            if base_mode == 0 and result is not None and result == 'fail':
                 shutil.copy(os.path.join(data_dir, image_names[idx]),
                             os.path.join(output_dir, image_names[idx]))
                 continue
+            if base_mode == 0:
+                ref_id = idx + 1
+            else:
+                ref_id = -1
             fp = tempfile.NamedTemporaryFile(suffix='.tif')
-            CR = COREG(os.path.join(output_dir, image_names[idx + 1]),
+            CR = COREG(os.path.join(output_dir, image_names[ref_id]),
                        os.path.join(data_dir, image_names[idx]),
                        path_out=fp.name, fmt_out='GTIFF',
                        r_b4match=match_band, s_b4match=match_band, q=True, v=False)
@@ -111,11 +116,12 @@ def main():
                     coreg_data.append([os.path.splitext(image_names[idx])[0], CR.coreg_info, CR.ssim_orig, CR.ssim_deshifted])
                     warp_data.append([os.path.splitext(image_names[idx])[0], warp_matrix])
             if result == 'fail':
-                print(f'Failed to register {image_names[idx]} to {image_names[idx + 1]} using band [{match_band}]')
+                print(f'Failed to register {image_names[idx]} to {image_names[ref_id]} using band [{match_band}]')
                 shutil.copy(os.path.join(data_dir, image_names[idx]),
                             os.path.join(output_dir, image_names[idx]))
             fp.close()
 
+    # Apply warping on successfully co-registered images
     for bounds in tqdm(bounds_data):
         (x_min, y_min, x_max, y_max) = bounds[1]
         with tempfile.NamedTemporaryFile(suffix='.tif') as fp:
@@ -141,6 +147,7 @@ def parse_args():
     parser.add_argument("--data_dir", help="Dataset directory (TIFF)", required=True)
     parser.add_argument("--output_dir", help="Output directory", required=True)
     parser.add_argument("--match_band", help="Band used for matching reference and target images", type=int, default=3)
+    parser.add_argument("--base_mode", help="Base image mode (0 - chain correction 1 - single base)", type=int, default=0, choices=[0, 1])
     return parser.parse_args()
 
 
