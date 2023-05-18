@@ -84,16 +84,16 @@ def main():
         result = None
 
         # Co-register with latest co-registered image (the reference base is assumed to be co-registered)
-        for idx in range(len(image_names) - 1, 0, -1):
-            if os.path.exists(os.path.join(output_dir, image_names[idx - 1])):
+        for idx in range(len(image_names) - 2, -1, -1):
+            if os.path.exists(os.path.join(output_dir, image_names[idx])):
                 continue
             if result is not None and result == 'fail':
-                shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
-                            os.path.join(output_dir, image_names[idx - 1]))
+                shutil.copy(os.path.join(data_dir, image_names[idx]),
+                            os.path.join(output_dir, image_names[idx]))
                 continue
             fp = tempfile.NamedTemporaryFile(suffix='.tif')
-            CR = COREG(os.path.join(output_dir, image_names[idx]),
-                       os.path.join(data_dir, image_names[idx - 1]),
+            CR = COREG(os.path.join(output_dir, image_names[idx + 1]),
+                       os.path.join(data_dir, image_names[idx]),
                        path_out=fp.name, fmt_out='GTIFF',
                        r_b4match=match_band, s_b4match=match_band, q=True, v=False)
             try:
@@ -108,14 +108,14 @@ def main():
                     result = 'fail'
                 else:
                     _ = CR.correct_shifts()
-                    shutil.copy(fp.name, os.path.join(output_dir, image_names[idx - 1]))
-                    bounds_data.append([os.path.splitext(image_names[idx - 1])[0], CR.shift.footprint_poly.bounds])
-                    coreg_data.append([os.path.splitext(image_names[idx - 1])[0], CR.coreg_info, CR.ssim_orig, CR.ssim_deshifted])
-                    warp_data.append([os.path.splitext(image_names[idx - 1])[0], warp_matrix])
+                    shutil.copy(fp.name, os.path.join(output_dir, image_names[idx]))
+                    bounds_data.append([os.path.splitext(image_names[idx])[0], CR.shift.footprint_poly.bounds])
+                    coreg_data.append([os.path.splitext(image_names[idx])[0], CR.coreg_info, CR.ssim_orig, CR.ssim_deshifted])
+                    warp_data.append([os.path.splitext(image_names[idx])[0], warp_matrix])
             if result == 'fail':
-                print(f'Failed to register {image_names[idx - 1]} to {image_names[idx]} using band [{match_band}]')
-                shutil.copy(os.path.join(data_dir, image_names[idx - 1]),
-                            os.path.join(output_dir, image_names[idx - 1]))
+                print(f'Failed to register {image_names[idx]} to {image_names[idx + 1]} using band [{match_band}]')
+                shutil.copy(os.path.join(data_dir, image_names[idx]),
+                            os.path.join(output_dir, image_names[idx]))
             fp.close()
 
     for bounds in tqdm(bounds_data):
