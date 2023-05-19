@@ -583,7 +583,7 @@ class DLinkNet34LessPool(nn.Module):
 
 
 class DLinkNet34(nn.Module):
-    def __init__(self, backbone='imagenet', num_classes=1, num_channels=3):
+    def __init__(self, backbone='imagenet', num_classes=1, num_channels=3, interp_mode=None):
         super(DLinkNet34, self).__init__()
 
         filters = [64, 128, 256, 512]
@@ -596,6 +596,11 @@ class DLinkNet34(nn.Module):
             resnet = moco.resnet34()
         else:
             raise ValueError()
+
+        if interp_mode is None:
+            self.up_sample = nn.Identity()
+        else:
+            self.up_sample = nn.Upsample(size=(1024, 1024), mode=interp_mode)
 
         self.first_conv = resnet.conv1
         self.first_bn = resnet.bn1
@@ -626,6 +631,7 @@ class DLinkNet34(nn.Module):
 
     def forward(self, x):
         # Encoder
+        x = self.up_sample(x)
         x = self.first_conv(x)
         x = self.first_bn(x)
         x = self.first_relu(x)
