@@ -75,7 +75,7 @@ class MyFrame:
         self.forward()
         self.optimizer.zero_grad()
         pred = self.net.forward(self.img)
-        loss = self.loss(self.mask, pred)
+        loss = self.loss(pred, self.mask)
         accuracy = self.metric(self.mask, pred)
         loss.backward()
         self.optimizer.step()
