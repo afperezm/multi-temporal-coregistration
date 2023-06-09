@@ -201,7 +201,7 @@ def main():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Binary masks de-shifter.")
+    parser = argparse.ArgumentParser(description="Trainer for road extraction model")
     parser.add_argument("--data_dir", help="Dataset directory", required=True)
     parser.add_argument("--results_dir", help="Results directory", default="./results/")
     parser.add_argument("--epochs", help="Number of epochs", type=int, default=300)
