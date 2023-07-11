@@ -14,6 +14,11 @@ class RandomHSV(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
 
+        if 'reference' in sample:
+            reference = sample['reference']
+        else:
+            reference = None
+
         if np.random.random() < self.p:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
             h, s, v = cv2.split(image)
@@ -28,7 +33,10 @@ class RandomHSV(object):
             # image = cv2.merge((s, v))
             image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
 
-        return {'image': image, 'label': label}
+        if 'reference' in sample:
+            return {'image': image, 'reference': reference, 'label': label}
+        else:
+            return {'image': image, 'label': label}
 
 
 class RandomShiftScale(object):
@@ -44,6 +52,11 @@ class RandomShiftScale(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
+
+        if 'reference' in sample:
+            reference = sample['reference']
+        else:
+            reference = None
 
         if np.random.random() < self.p:
             height, width, channel = image.shape
@@ -71,30 +84,60 @@ class RandomShiftScale(object):
                                         flags=cv2.INTER_LINEAR,
                                         borderMode=self.border_mode,
                                         borderValue=(0, 0, 0,))
+            if 'reference' in sample:
+                reference = cv2.warpPerspective(reference, mat, (width, height),
+                                                flags=cv2.INTER_LINEAR,
+                                                borderMode=self.border_mode,
+                                                borderValue=(0, 0, 0,))
             label = cv2.warpPerspective(label, mat, (width, height),
-                                       flags=cv2.INTER_LINEAR,
-                                       borderMode=self.border_mode,
-                                       borderValue=(0, 0, 0,))
+                                        flags=cv2.INTER_LINEAR,
+                                        borderMode=self.border_mode,
+                                        borderValue=(0, 0, 0,))
 
-        return {'image': image, 'label': label}
+        if 'reference' in sample:
+            return {'image': image, 'reference': reference, 'label': label}
+        else:
+            return {'image': image, 'label': label}
 
 
 class RandomHorizontalFlip(object):
+    """
+    Horizontally flip the image and label in a sample randomly with a given probability.
+
+    Args:
+        p (float): probability of the ndarrays being flipped. Default value is 0.5
+    """
 
     def __init__(self, p: float = 0.5):
         self.p = p
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
+
+        if 'reference' in sample:
+            reference = sample['reference']
+        else:
+            reference = None
 
         if np.random.random() < self.p:
             image = np.fliplr(image).copy()
+            if 'reference' in sample:
+                reference = np.fliplr(reference).copy()
             label = np.fliplr(label).copy()
 
-        return {'image': image, 'label': label}
+        if 'reference' in sample:
+            return {'image': image, 'reference': reference, 'label': label}
+        else:
+            return {'image': image, 'label': label}
 
 
 class RandomVerticalFlip(object):
+    """
+    Vertically flip the image and label in a sample randomly with a given probability.
+
+    Args:
+        p (float): probability of the ndarrays being flipped. Default value is 0.5
+    """
 
     def __init__(self, p: float = 0.5):
         self.p = p
@@ -102,11 +145,21 @@ class RandomVerticalFlip(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
 
+        if 'reference' in sample:
+            reference = sample['reference']
+        else:
+            reference = None
+
         if np.random.random() < self.p:
             image = np.flipud(image).copy()
+            if 'reference' in sample:
+                reference = np.flipud(reference).copy()
             label = np.flipud(label).copy()
 
-        return {'image': image, 'label': label}
+        if 'reference' in sample:
+            return {'image': image, 'reference': reference, 'label': label}
+        else:
+            return {'image': image, 'label': label}
 
 
 class RandomRotation(object):
@@ -117,11 +170,21 @@ class RandomRotation(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
 
+        if 'reference' in sample:
+            reference = sample['reference']
+        else:
+            reference = None
+
         if np.random.random() < self.p:
             image = np.rot90(image)
+            if 'reference' in sample:
+                reference = np.rot90(reference)
             label = np.rot90(label)
 
-        return {'image': image, 'label': label}
+        if 'reference' in sample:
+            return {'image': image, 'reference': reference, 'label': label}
+        else:
+            return {'image': image, 'label': label}
 
 
 class Normalize(object):
@@ -146,10 +209,19 @@ class Normalize(object):
             label[label >= 0.5] = 1.0
             label[label < 0.5] = 0.0
 
-        return {'image': image, 'label': label}
+        sample_normalized = {'image': image, 'label': label}
+
+        if 'reference' in sample:
+            reference = sample['reference']
+            reference = np.array(reference, np.float32) / 255.0
+            reference = reference * (self.feat_range[1] - self.feat_range[0]) + self.feat_range[0]
+            sample_normalized['reference'] = reference
+
+        return sample_normalized
 
 
 class ToTensor(object):
+    """Convert ndarrays in sample to tensors."""
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
@@ -157,4 +229,11 @@ class ToTensor(object):
         # Swap axis to place number of channels in front
         image, label = np.transpose(image, (2, 0, 1)), np.transpose(label, (2, 0, 1))
 
-        return {'image': torch.from_numpy(image), 'label': torch.from_numpy(label)}
+        sample_tensor = {'image': torch.from_numpy(image), 'label': torch.from_numpy(label)}
+
+        if 'reference' in sample:
+            reference = sample['reference']
+            reference = np.transpose(reference, (2, 0, 1))
+            sample_tensor['reference'] = torch.from_numpy(reference)
+
+        return sample_tensor
