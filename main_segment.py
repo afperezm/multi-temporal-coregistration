@@ -4,6 +4,7 @@ import os
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+from torchmetrics.classification import BinaryJaccardIndex
 
 from codebase.datasets.deepglobe import RoadsDataset
 from codebase.models.dlinknet import DLinkNet34
@@ -29,7 +30,7 @@ class DLinkNetModel(LightningModule):
         self.segmentation_model = DLinkNet34(backbone='imagenet')
         self.criterion1 = nn.BCELoss()
         self.criterion2 = DiceLoss()
-        self.metric = BinaryAccuracy()
+        self.metric = BinaryJaccardIndex()
 
     def training_step(self, batch, batch_idx):
         loss_bce, loss_dice, accuracy = self.shared_step(batch)
