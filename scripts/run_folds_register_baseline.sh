@@ -4,8 +4,9 @@ data_dir="${HOME}/data/northern-cities/gillam_mb_canada/"
 
 python -u utils/baseline_coregister.py \
        --data_dir "${data_dir}/folds/S2_10m/" \
-       --output_dir "${data_dir}/folds/S2_10m_deshifted/" \
-       --match_band 3
+       --output_dir "${data_dir}/folds/S2_10m_deshifted_single/" \
+       --match_band 3 \
+       --base_mode 1
 
 for fold in 0 1 2 3 4 5; do
 
@@ -18,7 +19,7 @@ for fold in 0 1 2 3 4 5; do
 
     python -u utils/dataset_images.py \
            --data_dir "${data_dir}/folds/fold-000${fold}/" \
-           --images_dir "${data_dir}/folds/S2_10m_deshifted/" \
+           --images_dir "${data_dir}/folds/S2_10m_deshifted_single/" \
            --phase "${phase}" \
            --threshold 0.001 \
            --num_workers 8
