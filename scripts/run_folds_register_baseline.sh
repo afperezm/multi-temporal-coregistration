@@ -2,7 +2,7 @@
 
 data_dir="${HOME}/data/northern-cities/gillam_mb_canada/"
 
-python -u utils/baseline_coregister.py \
+python -u utils/dataset_coregister_baseline.py \
        --data_dir "${data_dir}/folds/S2_10m/" \
        --output_dir "${data_dir}/folds/S2_10m_deshifted_single/" \
        --match_band 3 \
